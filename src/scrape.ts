@@ -1,86 +1,5 @@
-// import puppeteer from 'puppeteer-core';
-// import dotenv from 'dotenv';
-
-// dotenv.config();
-
-// // Check that required environment variables are defined
-// const requiredEnvs = ['BRIGHT_DATA_BROWSER_WSE_ENDPOINT'];
-// requiredEnvs.forEach((env) => {
-//   if (!process.env[env]) {
-//     throw new Error(`Environment variable ${env} is not defined or is empty.`);
-//   }
-// });
-
-// const {
-//     BRIGHT_DATA_BROWSER_WSE_ENDPOINT,
-//     TARGET_URL = 'https://geo.brdtest.com/mygeo.json',
-//     LOCATION = 'new_york',
-// } = process.env;
-
-// console.log({
-//   BRIGHT_DATA_BROWSER_WSE_ENDPOINT,
-//   TARGET_URL,
-//   LOCATION,
-// })
-
-// const LOCATIONS = Object.freeze({
-//     amsterdam: { lat: 52.377956, lon: 4.897070 },
-//     london: { lat: 51.509865, lon: -0.118092 },
-//     new_york: { lat: 40.730610, lon: -73.935242 },
-//     paris: { lat: 48.864716, lon: 2.349014 },
-// });
-
-// const scrape = async (url = TARGET_URL, location = LOCATION) => {
-//     if (!LOCATIONS[location]) {
-//         throw new Error(`Unknown location`);
-//     }
-//     const { lat, lon } = LOCATIONS[location];
-//     console.log(`Connecting to Browser...`);
-//     console.log({ browserWSEndpoint: BRIGHT_DATA_BROWSER_WSE_ENDPOINT });
-//     const browser = await puppeteer.connect({ browserWSEndpoint: BRIGHT_DATA_BROWSER_WSE_ENDPOINT });
-//     try {
-//         console.log(`Connected! Changing proxy location`
-//             + ` to ${location} (${lat}, ${lon})...`);
-//         const page = await browser.newPage();
-//         const client = await page.createCDPSession();
-//         await client.send('Proxy.setLocation', {
-//             lat, lon,
-//             distance: 50 /* kilometers */,
-//             strict: true,
-//         });
-//         console.log(`Navigating to ${url}...`);
-//         await page.goto(url, { timeout: 2 * 60 * 1000 });
-//         console.log(`Navigated! Scraping data...`);
-//         const data = await page.$eval('body', el => el.innerText);
-//         console.log(`Scraped! Data:`, JSON.parse(data));
-//     } finally {
-//         await browser.close();
-//     }
-// }
-
-// function getErrorDetails(error) {
-//     if (error.target?._req?.res) {
-//         const {
-//             statusCode,
-//             statusMessage,
-//         } = error.target._req.res;
-//         return `Unexpected Server Status ${statusCode}: ${statusMessage}`;
-//     }
-// }
-
-// scrape().catch(error => {
-//     console.error(getErrorDetails(error)
-//         || error.stack
-//         || error.message
-//         || error);
-//     process.exit(1);
-// });
-
-import { exec } from  'node:child_process';
-import puppeteer, { Browser, CDPSession, Page } from 'puppeteer-core';
-// import dotenv from 'dotenv';
-
-// dotenv.config();
+import puppeteer, { Browser, Page } from 'puppeteer-core';
+import { ensurePathExists, getPathFromUrl } from './utils.js';
 
 // Constants
 const SCRAPE_TIMEOUT = 120000; // 2 minutes
@@ -117,84 +36,13 @@ const createBrowserSession = async (browserWSEndpoint: string): Promise<Browser>
  * @param targetUrl - URL to navigate to and scrape.
  * @returns Scraped text content from the page's body.
  */
-const scrapePage = async (page: Page, targetUrl: string, timeout: number): Promise<string> => {
+export const scrapePage = async (page: Page, targetUrl: string, timeout: number): Promise<string> => {
   console.log(`Navigating to ${targetUrl}...`);
   await page.goto(targetUrl, { timeout, waitUntil: 'networkidle0' });
   console.log(`Page loaded. Scraping data...`);
-  const data = await page.$eval('body', (el) => el.innerText);
+  const data = await page.content();
   console.log('Scraping completed.');
   return data;
-};
-
-/**
- * Sanitizes a URL to be used as a filename by replacing invalid characters.
- * Invalid characters include control characters and characters that are not allowed in filenames.
- *
- * @param  url - The URL to be sanitized.
- * @returns The sanitized filename.
- */
-const sanitizeUrlForFilename = (url: string): string => {
-  // eslint-disable-next-line no-control-regex
-  const controlChars = /[\x00-\x1F]/g;
-  const invalidChars = /[<>:"\\/|?*]/g;
-  return url.replace(controlChars, '_').replace(invalidChars, '_');
-}
-
-const chromeExecutable = 'google-chrome';
-
-// const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-// export const openDevtools = async (page: Page, client: CDPSession): Promise<void> => {
-//     // get current frameId
-//     const frameId = page.mainFrame()._id;
-//     // get URL for devtools from scraping browser
-//     const { url: inspectUrl } = await client.send('Page.inspect', { frameId });
-//     // open devtools URL in local chrome
-//     exec(`"${chromeExecutable}" "${inspectUrl}"`, error => {
-//         if (error) {
-//           console.log(`Unable to open devtools for ${inspectUrl}. Error: ${error}`);
-//           throw new Error('Unable to open devtools: ' + error);
-//         }
-//     });
-//     // wait for devtools ui to load
-//     await delay(5000);
-// };
-
-
-// Define delay type
-type Delay = (ms: number) => Promise<void>;
-
-/**
- * Delays the execution for a specified time.
- * @param ms - Time in milliseconds to delay.
- * @returns A promise that resolves after the delay.
- */
-const delay: Delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-/**
- * Opens DevTools for a Puppeteer page using the WebSocket endpoint.
- * @param page - The Puppeteer page object.
- * @param chromeExecutable - Path to the Chrome or Chromium executable.
- * @returns A promise that resolves when DevTools UI has loaded.
- */
-export const openDevtools = async (page: puppeteer.Page, chromeExecutable: string): Promise<void> => {
-    try {
-        // Get the WebSocket endpoint to generate the DevTools URL
-        const inspectUrl = `chrome-devtools://devtools/inspector.html?ws=${page.browser().wsEndpoint()}`;
-
-        // Open the DevTools URL in a local Chrome instance
-        exec(`"${chromeExecutable}" "${inspectUrl}"`, (error) => {
-            if (error) {
-                console.log(`Unable to open DevTools for ${inspectUrl}. Error: ${error}`);
-                throw new Error('Unable to open DevTools: ' + error);
-            }
-        });
-
-        // Wait for the DevTools UI to load
-        await delay(5000);
-    } catch (error) {
-        console.error(`Error opening DevTools: ${error.message}`);
-        throw error;
-    }
 };
 
 /**
@@ -207,13 +55,15 @@ export const scrape = async ({ browserWSEndpoint, targetUrl, screenshot, timeout
 
   try {
     const page = await browser.newPage();
-    // const client: CDPSession = await page.createCDPSession();
-    // await openDevtools(page, chromeExecutable);
 
     const scrapedData = await scrapePage(page, targetUrl, timeout);
     if (screenshot) {
       console.log('Taking full-page screenshot...');
-      const screenshotPath = `${sanitizeUrlForFilename(targetUrl)}.png`;
+
+      const screenshotPath = getPathFromUrl({ url: targetUrl, filename: 'screenshot.png' });
+      ensurePathExists(screenshotPath);
+      console.log('Screenshot Path:', screenshotPath);
+      // const screenshotPath = `${sanitizeUrlForFilename(targetUrl)}.png`;
       await page.screenshot({ path: screenshotPath, fullPage: true });
       console.log(`Full-page screenshot saved to ${screenshotPath}`);
     }

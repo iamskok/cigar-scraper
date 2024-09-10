@@ -1,19 +1,28 @@
 import * as cheerio from 'cheerio';
 import turndown from 'turndown';
+import { Buffer } from 'buffer';
 
-// Types for structured cigar data and other outputs
+// Types for the cleanup options
 export type CleanHTMLOptions = {
-  scripts?: boolean;
-  styles?: boolean;
-  ads?: boolean;
-  hiddenElements?: boolean;
-  inlineHandlers?: boolean;
-  inlineStyles?: boolean;
-  srcAttributes?: boolean;
-  hrefAttributes?: boolean;
-  header?: boolean;
-  footer?: boolean;
-  iframes?: boolean;
+  removeScripts?: boolean;
+  removeStyles?: boolean;
+  removeAds?: boolean;
+  removeHiddenElements?: boolean;
+  removeInlineHandlers?: boolean;
+  removeInlineStyles?: boolean;
+  removeSrcAttributes?: boolean;
+  removeHrefAttributes?: boolean;
+  removeIframes?: boolean;
+  removeHeaderLayout?: boolean;
+  removeFooterLayout?: boolean;
+  removeBase64?: boolean;
+  base64Threshold?: number;
+  removeVideoSrc?: boolean;
+  removeImgSrc?: boolean;
+  removeSchemaMarkup?: boolean;
+  removeOGMarkup?: boolean;
+  removeTwitterMarkup?: boolean;
+  removeJSONLDMarkup?: boolean;
 };
 
 /**
@@ -28,61 +37,98 @@ export const cleanHTML = (html: string, options: CleanHTMLOptions = {}): string 
   const $ = cheerio.load(html);
 
   // Remove <script> and <style> tags if specified
-  if (options.scripts) $('script').remove();
-  if (options.styles) $('style').remove();
+  if (options.removeScripts) $('script').remove();
+  if (options.removeStyles) $('style').remove();
 
   // Remove advertisements and tracking elements if specified
-  if (options.ads) {
+  if (options.removeAds) {
     $('[id*="ad"], [class*="ad"], .tracking, .advertisement, .promo-banner').remove();
   }
 
   // Remove hidden elements if specified
-  if (options.hiddenElements) {
+  if (options.removeHiddenElements) {
     $('[style*="display:none"], [style*="visibility:hidden"]').remove();
   }
 
   // Remove inline event handlers (e.g., onclick, onmouseover) if specified
-  if (options.inlineHandlers) {
+  if (options.removeInlineHandlers) {
     $('[onclick], [onmouseover], [onmouseout], [onfocus], [onblur]').removeAttr('onclick onmouseover onmouseout onfocus onblur');
   }
 
   // Remove all inline styles if specified
-  if (options.inlineStyles) {
+  if (options.removeInlineStyles) {
     $('[style]').removeAttr('style');
   }
 
   // Remove all src attributes (e.g., from images, iframes) if specified
-  if (options.srcAttributes) {
+  if (options.removeSrcAttributes) {
     $('[src]').removeAttr('src');
   }
 
-  // Remove all href attributes (e.g., from anchor tags) if specified
-  if (options.hrefAttributes) {
-    $('[href]').removeAttr('href');
+  // Remove video src attributes if specified
+  if (options.removeVideoSrc) {
+    $('video').removeAttr('src');
+  }
+
+  // Remove img src attributes if specified
+  if (options.removeImgSrc) {
+    $('img').removeAttr('src');
   }
 
   // Remove iframes if specified
-  if (options.iframes) {
+  if (options.removeIframes) {
     $('iframe').remove();
   }
 
-  // Remove header if specified (generic header patterns)
-  if (options.header) {
+  // Remove header layout if specified (generic header patterns)
+  if (options.removeHeaderLayout) {
     $('header').remove(); // Generic <header> tag
+    $('#header').remove(); // Header with ID
     $('div[id*="header"], div[class*="header"]').remove(); // Common div header patterns
     $('nav').remove(); // Navigation bar as part of the header
     $('section[class*="header"]').remove(); // Header sections
   }
 
-  // Remove footer if specified (generic footer patterns)
-  if (options.footer) {
+  // Remove footer layout if specified (generic footer patterns)
+  if (options.removeFooterLayout) {
     $('footer').remove(); // Generic <footer> tag
+    $('#footer').remove(); // Footer with ID
     $('div[id*="footer"], div[class*="footer"]').remove(); // Common div footer patterns
     $('section[class*="footer"]').remove(); // Footer sections
   }
 
+  // Generalized removal of Base64-like strings across entire HTML content
+  if (options.removeBase64) {
+    const base64Regex = new RegExp(`[A-Za-z0-9+/=]{${options.base64Threshold || 40},}`, 'g');
+    $('*').each((_, el) => {
+      const elementText = $(el).html();
+      if (elementText && base64Regex.test(elementText)) {
+        $(el).html(elementText.replace(base64Regex, ''));
+      }
+    });
+  }
+
+  // Remove schema.org attributes and markup if specified
+  if (options.removeSchemaMarkup) {
+    $('[itemtype*="schema.org"], [itemprop], [itemscope]').removeAttr('itemtype itemprop itemscope');
+  }
+
+  // Remove Open Graph (og) meta tags if specified
+  if (options.removeOGMarkup) {
+    $('meta[property^="og:"]').remove();
+  }
+
+  // Remove Twitter meta tags if specified
+  if (options.removeTwitterMarkup) {
+    $('meta[name^="twitter:"]').remove();
+  }
+
+  // Remove JSON-LD scripts if specified
+  if (options.removeJSONLDMarkup) {
+    $('script[type="application/ld+json"]').remove();
+  }
+
   // Clean up extra white spaces
-  // const cleanedHTML = $.html().replace(/\s+/g, ' ').trim();
   const cleanedHTML = $.html().trim();
   return cleanedHTML;
 };
@@ -98,19 +144,17 @@ export const convertToMarkdown = (html: string): string => {
   return turndownService.turndown(html);
 };
 
-type ProcessHTMLOptions = {
+export type ProcessHTMLOptions = {
   cleanHTMLOptions?: CleanHTMLOptions;
   useMarkdown?: boolean;
 };
 
-type ProcessHTMLResult = {
+export type ProcessHTMLResult = {
   rawHtml: string;
   cleanedHTML: string;
   markdown?: string;
   sizes: Record<string, { bytes: number; readable: string }>;
 };
-
-import { Buffer } from 'buffer';
 
 /**
  * Converts bytes into a more human-readable format (KB, MB, etc.).

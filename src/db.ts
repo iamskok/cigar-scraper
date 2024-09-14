@@ -40,6 +40,7 @@ import { ensurePathExists, getPathFromUrl } from './utils.js';
  * @param folderPrefix - (Optional) The base folder to store the data.
  */
 export const saveProcessedHTMLToFiles = (content: ProcessHTMLResult, url: string, folderPrefix?: string): void => {
+  console.log('Saving processed HTML to files...');
   const folderPath = getPathFromUrl({ url, folderPrefix });
   ensurePathExists(folderPath);
 
@@ -51,27 +52,29 @@ export const saveProcessedHTMLToFiles = (content: ProcessHTMLResult, url: string
   // Save raw HTML to a file
   const rawHtmlPath = path.join(folderPath, 'raw.html');
   fs.writeFileSync(rawHtmlPath, content.rawHtml, 'utf-8');
+  console.log(`Saved raw HTML to file: ${rawHtmlPath}`);
 
   // Save cleaned HTML to a file
   const cleanedHtmlPath = path.join(folderPath, 'cleaned.html');
   fs.writeFileSync(cleanedHtmlPath, content.cleanedHTML, 'utf-8');
+  console.log(`Saved cleaned HTML to file: ${cleanedHtmlPath}`);
 
   // Save markdown to a file if available
   if (content.markdown) {
     const markdownPath = path.join(folderPath, 'content.md');
     fs.writeFileSync(markdownPath, content.markdown, 'utf-8');
+    console.log(`Saved markdown to file: ${markdownPath}`);
   }
 
   // Save sizes as JSON
   const sizesPath = path.join(folderPath, 'sizes.json');
   fs.writeFileSync(sizesPath, JSON.stringify(content.sizes), 'utf-8');
-
-  console.log(`Saved files to folder: ${folderPath}`);
+  console.log(`Saved sizes to file: ${sizesPath}`);
 };
 
 export type SaveExtractedDataParams = {
   content: string;
-  type: 'text' | 'image';
+  type: 'text' | 'image' | 'multi';
   model: string;
   url: string;
   folderPrefix?: string;
@@ -90,6 +93,16 @@ export const saveExtractedData = ({
   url,
   folderPrefix = 'data',
 }: SaveExtractedDataParams): void => {
+  console.log(`Saving extracted data to file for model ${model}...`);
+
+  // Check if content is valid JSON
+  try {
+    JSON.parse(content);
+  } catch (error) {
+    console.error(`Invalid JSON content for model ${model}:`, error);
+    throw new Error(`Invalid JSON content: ${error.message}`);
+  }
+
   // Use the getPathFromUrl function to construct the file path
   const filePath = getPathFromUrl({
     url,
@@ -102,7 +115,6 @@ export const saveExtractedData = ({
   ensurePathExists(folderPath);
 
   // Save the content as a JSON file
-  fs.writeFileSync(filePath, JSON.stringify(content, null, 2), 'utf-8');
-
+  fs.writeFileSync(filePath, content, 'utf-8');
   console.log(`Saved extracted data to file: ${filePath}`);
 };

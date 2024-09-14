@@ -76,6 +76,18 @@ export const ensurePathExists = (filePath: string): void => {
   }
 };
 
+/**
+ * Converts bytes into a more human-readable format (KB, MB, etc.).
+ * @param bytes - The size in bytes.
+ * @returns A string representing the size in a more readable format.
+ */
+export const formatByteSize = (bytes: number): string => {
+  if (bytes === 0) return '0 Bytes';
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
+};
+
 // /**
 //  * Function to generate a file path, create the file if it doesn't exist, and return the file path as a string.
 //  *

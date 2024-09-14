@@ -1,6 +1,7 @@
 import * as cheerio from 'cheerio';
 import turndown from 'turndown';
 import { Buffer } from 'buffer';
+import { formatByteSize } from './utils.js';
 
 // Types for the cleanup options
 export type CleanHTMLOptions = {
@@ -34,6 +35,7 @@ export type CleanHTMLOptions = {
  * @returns Cleaned HTML as a string.
  */
 export const cleanHTML = (html: string, options: CleanHTMLOptions = {}): string => {
+  console.log('Cleaning HTML...');
   const $ = cheerio.load(html);
 
   // Remove <script> and <style> tags if specified
@@ -128,8 +130,8 @@ export const cleanHTML = (html: string, options: CleanHTMLOptions = {}): string 
     $('script[type="application/ld+json"]').remove();
   }
 
-  // Clean up extra white spaces
   const cleanedHTML = $.html().trim();
+  console.log('HTML cleaned.');
   return cleanedHTML;
 };
 
@@ -140,8 +142,11 @@ export const cleanHTML = (html: string, options: CleanHTMLOptions = {}): string 
  * @returns Markdown content.
  */
 export const convertToMarkdown = (html: string): string => {
+  console.log('Converting HTML to Markdown...');
   const turndownService = new turndown();
-  return turndownService.turndown(html);
+  const markdown = turndownService.turndown(html);
+  console.log('HTML converted to Markdown.');
+  return markdown;
 };
 
 export type ProcessHTMLOptions = {
@@ -154,18 +159,6 @@ export type ProcessHTMLResult = {
   cleanedHTML: string;
   markdown?: string;
   sizes: Record<string, { bytes: number; readable: string }>;
-};
-
-/**
- * Converts bytes into a more human-readable format (KB, MB, etc.).
- * @param bytes - The size in bytes.
- * @returns A string representing the size in a more readable format.
- */
-const formatSizeUnits = (bytes: number): string => {
-  if (bytes === 0) return '0 Bytes';
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
 };
 
 /**
@@ -199,15 +192,15 @@ export const processHTML = (
   const sizes = {
     rawHtml: {
       bytes: rawHtmlSize,
-      readable: formatSizeUnits(rawHtmlSize)
+      readable: formatByteSize(rawHtmlSize)
     },
     cleanedHTML: {
       bytes: cleanedHTMLSize,
-      readable: formatSizeUnits(cleanedHTMLSize)
+      readable: formatByteSize(cleanedHTMLSize)
     },
     markdown: {
       bytes: markdownSize,
-      readable: formatSizeUnits(markdownSize)
+      readable: formatByteSize(markdownSize)
     },
   };
 
@@ -221,3 +214,22 @@ export const processHTML = (
     sizes
   };
 };
+
+export const processHTMLSections = (
+  rawHtml: string,
+  selectors: string[],
+  options: ProcessHTMLOptions = {}
+): ProcessHTMLResult[] => {
+  const $ = cheerio.load(rawHtml);
+
+  // I need to map over all selectors and get the raw HTML content chunks and check that all html nodes have content / not emprty otherwise throw an error
+  const rawHtmlChunks = selectors.map((selector) => {
+    const rawHtmlChunk = $(selector).html();
+    if (!rawHtmlChunk) {
+      throw new Error(`No content found for selector: ${selector}`);
+    }
+    return rawHtmlChunk;
+  });
+
+  return rawHtmlChunks.map((chunk) => processHTML(chunk, options));
+}

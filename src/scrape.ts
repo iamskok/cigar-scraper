@@ -51,10 +51,14 @@ export const scrapePage = async (page: Page, targetUrl: string, timeout: number)
  * @returns Scraped data as a string.
  */
 export const scrape = async ({ browserWSEndpoint, targetUrl, screenshot, timeout = SCRAPE_TIMEOUT }: ScrapeParams): Promise<string> => {
+  console.log(`Creating browser session...`);
   const browser = await createBrowserSession(browserWSEndpoint);
+  console.log(`Created browser session.`);
 
   try {
+    console.log('Creating new page...');
     const page = await browser.newPage();
+    console.log('Created new page.');
 
     const scrapedData = await scrapePage(page, targetUrl, timeout);
     if (screenshot) {
@@ -68,8 +72,10 @@ export const scrape = async ({ browserWSEndpoint, targetUrl, screenshot, timeout
       console.log(`Full-page screenshot saved to ${screenshotPath}`);
     }
 
+    console.log('Returning scraped data...');
     return scrapedData;
   } finally {
+    console.log('Closing browser session...');
     await browser.close();
   }
 };

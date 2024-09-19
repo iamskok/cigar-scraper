@@ -9,6 +9,12 @@ dotenv.config();
  * @param requiredVars - List of required environment variables
  */
 export const checkEnvVars = (requiredVars: string[]): void => {
+  /**
+   * Checks if required environment variables are defined
+   * @param {string[]} requiredVars - Array of required environment variable names
+   * @throws {Error} If any required environment variable is not defined
+   * @returns {void}
+   */
   requiredVars.forEach((envVar) => {
     if (!process.env[envVar]) {
       throw new Error(`Environment variable ${envVar} is not defined.`);

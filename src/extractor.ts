@@ -132,6 +132,16 @@ export const sendToOpenAI = async ({
   console.log('Sending content to OpenAI for processing...');
   const openai = new OpenAI({ apiKey }); // Initialize OpenAI client directly with the passed API key
 
+  /**
+   * Sends a chat completion request to OpenAI API with retry functionality
+   * @param {Object} options - The options for the chat completion
+   * @param {string} options.model - The GPT-4-O model to use
+   * @param {Array} options.messages - The messages to send in the chat completion request
+   * @param {number} options.maxTokens - The maximum number of tokens for the response
+   * @param {number} options.temperature - The sampling temperature (0 for deterministic outputs)
+   * @param {Object} retryOptions - The options for retry functionality
+   * @returns {string} The generated content from the chat completion response
+   */
   return pRetry(async () => {
     const response = await openai.chat.completions.create({
       model, // GPT-4-O model with its token limits
@@ -184,6 +194,15 @@ export const sendImageToOpenAI = async ({
   console.log('Sending image to OpenAI for processing...');
   const openai = new OpenAI({ apiKey });
 
+  /**
+   * Processes an image through a series of steps including compression, conversion to Base64, and sending to OpenAI for analysis.
+   * @param {string} imagePath - The path to the input image file.
+   * @param {string} model - The OpenAI model to use for processing.
+   * @param {number} temperature - The temperature setting for the OpenAI API call.
+   * @param {number} maxTokens - The maximum number of tokens for the OpenAI API response.
+   * @param {Object} retryOptions - Options for the pRetry function.
+   * @returns {Promise<string>} A promise that resolves to the content of the OpenAI API response, or an empty string if no content is returned.
+   */
   return pRetry(async () => {
     // 1. Crop and compress the image
     const compressedImagePath = insertBeforeFileExtention(
@@ -389,6 +408,17 @@ export type SendImageAndTextToOpenAIParams = {
   temperature: number;
   // messages: OpenAI.Chat.ChatCompletionCreateParams['messages'];
   messages: ChatCompletionMessageParam[];
+  /**
+   * Sends image and text to OpenAI for processing and returns the generated content.
+   * @param {Object} options - The options for sending data to OpenAI.
+   * @param {string} options.apiKey - The API key for OpenAI.
+   * @param {string} [options.model='gpt-4o-2024-08-06'] - The OpenAI model to use.
+   * @param {number} [options.maxTokens=4000] - The maximum number of tokens for the response.
+   * @param {number} [options.temperature=0] - The temperature setting for response generation.
+   * @param {Array} options.messages - The messages to send to OpenAI.
+   * @param {Object} options.retryOptions - The options for retrying the API call.
+   * @returns {Promise<string>} The generated content from OpenAI.
+   */
   // base64Image: string; // Local path of the image file
   retryOptions: RetryOptions;
   // response_format: {
@@ -414,6 +444,18 @@ export const sendImageAndTextToOpenAI = async ({
   // Convert the image to base64 using the provided utility function
   // const base64Image = await convertImageToBase64(imagePath);
 
+  /**
+   * Sends a chat completion request to OpenAI API with retry functionality
+   * @param {Object} options - The options for the OpenAI chat completion request
+   * @param {string} options.model - The AI model to use
+   * @param {Array} options.messages - The messages to send to the AI
+   * @param {number} options.maxTokens - The maximum number of tokens to generate
+   * @param {number} options.temperature - The sampling temperature to use
+   * @param {Object} options.extractionRequirementsSchema - The schema for response format
+   * @param {Object} retryOptions - The options for the retry functionality
+   * @returns {string} The content of the AI's response or an empty string if no content
+   * @throws {Error} If there's an error sending the request to OpenAI after retries
+   */
   return pRetry(async () => {
     try {
 

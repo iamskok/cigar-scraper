@@ -102,6 +102,13 @@ export const cleanHTML = (html: string, options: CleanHTMLOptions = {}): string 
   // Generalized removal of Base64-like strings across entire HTML content
   if (options.removeBase64) {
     const base64Regex = new RegExp(`[A-Za-z0-9+/=]{${options.base64Threshold || 40},}`, 'g');
+    ```
+    /**
+     * Iterates through all elements in the DOM and removes base64-encoded content from their HTML.
+     * @param {void} - This function doesn't take any parameters directly, but uses jQuery's .each() method.
+     * @returns {void} This function doesn't return a value, it modifies the DOM in place.
+     */
+    ```
     $('*').each((_, el) => {
       const elementText = $(el).html();
       if (elementText && base64Regex.test(elementText)) {
@@ -215,6 +222,14 @@ export const processHTML = (
   };
 };
 
+/**
+ * Processes HTML sections based on given selectors and options
+ * @param {string} rawHtml - The raw HTML string to process
+ * @param {string[]} selectors - An array of CSS selectors to extract content from
+ * @param {ProcessHTMLOptions} [options={}] - Optional processing options
+ * @returns {ProcessHTMLResult[]} An array of processed HTML results
+ * @throws {Error} Throws an error if no content is found for a given selector
+ */
 export const processHTMLSections = (
   rawHtml: string,
   selectors: string[],
@@ -231,5 +246,11 @@ export const processHTMLSections = (
     return rawHtmlChunk;
   });
 
+  /**
+   * Maps over an array of raw HTML chunks and processes each chunk using the processHTML function.
+   * @param {Array} rawHtmlChunks - An array of raw HTML strings to be processed.
+   * @param {Object} options - Configuration options for processing the HTML chunks.
+   * @returns {Array} An array of processed HTML chunks.
+   */
   return rawHtmlChunks.map((chunk) => processHTML(chunk, options));
 }

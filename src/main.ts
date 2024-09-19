@@ -24,6 +24,10 @@ const browserWSEndpoint = process.env.BRIGHT_DATA_BROWSER_WSE_ENDPOINT;
 const targetUrl =
   'https://www.neptunecigar.com/cigars/arturo-fuente-opus-x-angels-share-fuente-fuente';
 
+/**
+ * Executes the scraping process asynchronously, including HTML scraping, processing, and data extraction using OpenAI's GPT model.
+ * @returns {Promise<void>} A promise that resolves when the scraping process is complete
+ */
 const runScrapingProcess = async (): Promise<void> => {
   try {
     const rawHtml = await scrape({

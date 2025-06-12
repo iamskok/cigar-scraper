@@ -87,19 +87,33 @@ function analyzeDataStructure(data: AnalysisData): void {
     data.products.forEach((product, index) => {
       console.log(`  ${index + 1}. ${product.product_name || 'Unknown Product'}`);
       console.log(`     Brand: ${product.brand || 'Unknown'}`);
-      if (product.multiple_sizes && product.multiple_sizes.length > 0) {
-        console.log(`     Multiple Sizes: ${product.multiple_sizes.length} available`);
-        product.multiple_sizes.forEach((sizeInfo, sizeIndex) => {
-          const size = sizeInfo.size;
-          const price = sizeInfo.price;
-          console.log(`       ${sizeIndex + 1}. ${size?.display || 'Unknown size'} - $${price?.current_price || 'N/A'} ${price?.currency || ''}`);
-        });
-      } else if (product.single_size && product.single_price) {
-        console.log(`     Single Size: ${product.single_size.display || 'Unknown'} - $${product.single_price.current_price || 'N/A'} ${product.single_price.currency || ''}`);
-        if (product.single_price.msrp && product.single_price.savings) {
-          console.log(`     MSRP: $${product.single_price.msrp} (Save $${product.single_price.savings})`);
+
+      // Use the new size_options array structure
+      if (product.size_options && product.size_options.length > 0) {
+        if (product.size_options.length === 1) {
+          const option = product.size_options[0];
+          const size = option.size;
+          const price = option.price;
+          console.log(`     Size: ${size?.display || 'Unknown'} - $${price?.current_price || 'N/A'} ${price?.currency || ''}`);
+          if (price?.quantity && price?.quantity_type) {
+            console.log(`     Quantity: ${price.quantity} ${price.quantity_type}`);
+          }
+          if (price?.msrp && price?.savings) {
+            console.log(`     MSRP: $${price.msrp} (Save $${price.savings})`);
+          }
+        } else {
+          console.log(`     Multiple Size Options: ${product.size_options.length} available`);
+          product.size_options.forEach((option, optionIndex) => {
+            const size = option.size;
+            const price = option.price;
+            const quantityInfo = price?.quantity && price?.quantity_type ? ` (${price.quantity} ${price.quantity_type})` : '';
+            console.log(`       ${optionIndex + 1}. ${size?.display || 'Unknown size'} - $${price?.current_price || 'N/A'} ${price?.currency || ''}${quantityInfo}`);
+          });
         }
+      } else {
+        console.log(`     No size/price information available`);
       }
+
       if (product.specifications) {
         console.log(`     Strength: ${product.specifications.strength || 'Unknown'}`);
         console.log(`     Wrapper: ${product.specifications.wrapper || 'Unknown'}`);

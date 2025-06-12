@@ -12,12 +12,12 @@ export const CIGAR_EXTRACTION_SCHEMA = {
       properties: {
         page_type: {
           type: "string",
-          enum: ["single_product_single_size", "single_product_multiple_sizes", "multiple_products", "search_results"],
-          description: "Type of page being scraped"
+          enum: ["single_product", "multiple_products", "search_results", "category_listing"],
+          description: "Type of page being scraped: 'single_product' for individual cigar product pages (regardless of size options), 'multiple_products' for product category pages, 'search_results' for search result pages, 'category_listing' for brand or category overview pages"
         },
         products: {
           type: "array",
-          description: "Array of cigar products found on the page",
+          description: "Array of cigar products found on the page. For single product pages, this will contain one item. For search results or category pages, this will contain multiple items. Always return an array, even for single products.",
           items: {
             type: "object",
             properties: {
@@ -47,47 +47,19 @@ export const CIGAR_EXTRACTION_SCHEMA = {
                 required: ["strength", "wrapper", "binder", "filler", "origin", "manufacturer", "blender"],
                 additionalProperties: false
               },
-              single_size: {
-                type: ["object", "null"],
-                description: "Size info for single-size products. Null for multi-size or search results.",
-                properties: {
-                  length: { type: ["number", "null"], description: "Length as decimal number" },
-                  length_unit: { type: ["string", "null"], enum: ["inches", "mm", null], description: "Unit of measurement" },
-                  ring_gauge: { type: ["number", "null"], description: "Ring gauge as whole number" },
-                  display: { type: ["string", "null"], description: "Original size display format" }
-                },
-                required: ["length", "length_unit", "ring_gauge", "display"],
-                additionalProperties: false
-              },
-              single_price: {
-                type: ["object", "null"],
-                description: "Price info for single-price products. Null for multi-size or search results.",
-                properties: {
-                  current_price: { type: ["number", "null"], description: "Current price as number without currency" },
-                  msrp: { type: ["number", "null"], description: "MSRP as number without currency" },
-                  savings: { type: ["number", "null"], description: "Savings amount as number without currency" },
-                  currency: { type: ["string", "null"], description: "Currency code like USD, EUR, GBP" }
-                },
-                required: ["current_price", "msrp", "savings", "currency"],
-                additionalProperties: false
-              },
-              single_availability: {
-                type: ["string", "null"],
-                description: "Stock status for single-size products. Null for multi-size."
-              },
-              multiple_sizes: {
-                type: ["array", "null"],
-                description: "Array of size/price combinations for multi-size products. Null for single-size.",
+              size_options: {
+                type: "array",
+                description: "Array of available size and pricing combinations. Even for single-size products, use an array with one element. Each element contains size info, pricing, and availability for that specific option.",
                 items: {
                   type: "object",
                   properties: {
                     size: {
                       type: "object",
                       properties: {
-                        length: { type: ["number", "null"] },
-                        length_unit: { type: ["string", "null"], enum: ["inches", "mm", null] },
-                        ring_gauge: { type: ["number", "null"] },
-                        display: { type: ["string", "null"] }
+                        length: { type: ["number", "null"], description: "Length as decimal number" },
+                        length_unit: { type: ["string", "null"], enum: ["inches", "mm", null], description: "Unit of measurement" },
+                        ring_gauge: { type: ["number", "null"], description: "Ring gauge as whole number" },
+                        display: { type: ["string", "null"], description: "Original size display format" }
                       },
                       required: ["length", "length_unit", "ring_gauge", "display"],
                       additionalProperties: false
@@ -95,17 +67,19 @@ export const CIGAR_EXTRACTION_SCHEMA = {
                     price: {
                       type: "object",
                       properties: {
-                        current_price: { type: ["number", "null"] },
-                        msrp: { type: ["number", "null"] },
-                        savings: { type: ["number", "null"] },
-                        currency: { type: ["string", "null"] }
+                        current_price: { type: ["number", "null"], description: "Current price as number without currency" },
+                        msrp: { type: ["number", "null"], description: "MSRP as number without currency" },
+                        savings: { type: ["number", "null"], description: "Savings amount as number without currency" },
+                        currency: { type: ["string", "null"], description: "Currency code like USD, EUR, GBP" },
+                        quantity: { type: ["number", "null"], description: "Number of cigars included at this price (e.g., 1, 5, 20, 25)" },
+                        quantity_type: { type: ["string", "null"], enum: ["single", "pack", "box", "bundle", "sampler", null], description: "Type of quantity packaging" }
                       },
-                      required: ["current_price", "msrp", "savings", "currency"],
+                      required: ["current_price", "msrp", "savings", "currency", "quantity", "quantity_type"],
                       additionalProperties: false
                     },
                     availability: {
                       type: ["string", "null"],
-                      description: "Stock status for this specific size"
+                      description: "Stock status for this specific option"
                     }
                   },
                   required: ["size", "price", "availability"],
@@ -113,7 +87,7 @@ export const CIGAR_EXTRACTION_SCHEMA = {
                 }
               }
             },
-            required: ["product_name", "brand", "description", "specifications", "single_size", "single_price", "single_availability", "multiple_sizes"],
+            required: ["product_name", "brand", "description", "specifications", "size_options"],
             additionalProperties: false
           }
         }

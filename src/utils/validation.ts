@@ -179,3 +179,45 @@ export function createTimestampedFilename(baseName: string, extension: string): 
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   return `${baseName}_${timestamp}.${extension}`;
 }
+
+/**
+ * Sanitize quantity type values to handle unknown packaging types gracefully
+ * @param data - Raw extraction data that may contain unknown quantity_type values
+ * @returns Sanitized data with unknown quantity_type values converted to 'other'
+ */
+export function sanitizeExtractionData(data: unknown): unknown {
+  if (!data || typeof data !== 'object') return data;
+
+  if (Array.isArray(data)) {
+    return data.map(sanitizeExtractionData);
+  }
+
+  const result = { ...data as Record<string, unknown> };
+
+  // Handle quantity_type field specifically
+  if (result.quantity_type && typeof result.quantity_type === 'string') {
+    const validTypes = [
+      'single', 'pack', 'box', 'bundle', 'sampler',
+      'tin', 'tube', 'cabinet', 'case', 'sleeve',
+      'other', 'unspecified'
+    ];
+
+    const normalizedType = result.quantity_type.toLowerCase();
+    if (!validTypes.includes(normalizedType)) {
+      console.warn(`⚠️  Unknown quantity_type "${result.quantity_type}" found, converting to "other"`);
+      result.quantity_type = 'other';
+    } else {
+      // Normalize to lowercase for consistency
+      result.quantity_type = normalizedType;
+    }
+  }
+
+  // Recursively process nested objects and arrays
+  Object.keys(result).forEach(key => {
+    if (result[key] && typeof result[key] === 'object') {
+      result[key] = sanitizeExtractionData(result[key]);
+    }
+  });
+
+  return result;
+}

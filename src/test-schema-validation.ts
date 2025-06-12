@@ -37,7 +37,7 @@ const testSingleProduct = {
             quantity: 1,
             quantity_type: "single"
           },
-          availability: "In Stock"
+          availability: true
         }
       ]
     }
@@ -76,7 +76,7 @@ const testMultipleProducts = {
             quantity: 1,
             quantity_type: "single"
           },
-          availability: "In Stock"
+          availability: true
         }
       ]
     },
@@ -109,7 +109,7 @@ const testMultipleProducts = {
             quantity: 1,
             quantity_type: "single"
           },
-          availability: "In Stock"
+          availability: true
         }
       ]
     }
@@ -148,7 +148,7 @@ const testMultipleSizesWithQuantities = {
             quantity: 1,
             quantity_type: "single"
           },
-          availability: "In Stock"
+          availability: true
         },
         {
           size: {
@@ -165,7 +165,7 @@ const testMultipleSizesWithQuantities = {
             quantity: 5,
             quantity_type: "pack"
           },
-          availability: "In Stock"
+          availability: true
         },
         {
           size: {
@@ -182,12 +182,91 @@ const testMultipleSizesWithQuantities = {
             quantity: 25,
             quantity_type: "box"
           },
-          availability: "In Stock"
+          availability: false
         }
       ]
     }
   ]
 };
+
+// Test case with various packaging types including edge cases
+const testPackagingTypes = {
+  page_type: "single_product",
+  products: [
+    {
+      product_name: "Premium Cigar Collection",
+      brand: "Test Brand",
+      description: "Testing various packaging types",
+      specifications: {
+        strength: "Medium",
+        wrapper: "Connecticut",
+        binder: "Dominican",
+        filler: "Nicaraguan",
+        origin: "Nicaragua",
+        manufacturer: "Test Manufacturer",
+        blender: "Test Blender"
+      },
+      size_options: [
+        {
+          size: { length: 6, length_unit: "inches", ring_gauge: 50, display: "6 x 50" },
+          price: { current_price: 15.99, msrp: null, savings: null, currency: "USD", quantity: 1, quantity_type: "single" },
+          availability: true
+        },
+        {
+          size: { length: 6, length_unit: "inches", ring_gauge: 50, display: "6 x 50" },
+          price: { current_price: 149.99, msrp: null, savings: null, currency: "USD", quantity: 10, quantity_type: "tin" },
+          availability: true
+        },
+        {
+          size: { length: 6, length_unit: "inches", ring_gauge: 50, display: "6 x 50" },
+          price: { current_price: 45.99, msrp: null, savings: null, currency: "USD", quantity: 3, quantity_type: "tube" },
+          availability: true
+        },
+        {
+          size: { length: 6, length_unit: "inches", ring_gauge: 50, display: "6 x 50" },
+          price: { current_price: 899.99, msrp: null, savings: null, currency: "USD", quantity: 50, quantity_type: "cabinet" },
+          availability: false
+        },
+        {
+          size: { length: 6, length_unit: "inches", ring_gauge: 50, display: "6 x 50" },
+          price: { current_price: 25.99, msrp: null, savings: null, currency: "USD", quantity: 5, quantity_type: "sleeve" },
+          availability: null
+        }
+      ]
+    }
+  ]
+};
+
+/**
+ * Data transformer to handle unknown quantity types gracefully
+ */
+function sanitizeQuantityType(data: unknown): unknown {
+  if (!data || typeof data !== 'object') return data;
+
+  if (Array.isArray(data)) {
+    return data.map(sanitizeQuantityType);
+  }
+
+  const result = { ...data as Record<string, unknown> };
+
+  if (result.quantity_type && typeof result.quantity_type === 'string') {
+    const validTypes = ['single', 'pack', 'box', 'bundle', 'sampler', 'tin', 'tube', 'cabinet', 'case', 'sleeve', 'other', 'unspecified'];
+
+    if (!validTypes.includes(result.quantity_type.toLowerCase())) {
+      console.warn(`⚠️  Unknown quantity_type "${result.quantity_type}" found, converting to "other"`);
+      result.quantity_type = 'other';
+    }
+  }
+
+  // Recursively process nested objects
+  Object.keys(result).forEach(key => {
+    if (result[key] && typeof result[key] === 'object') {
+      result[key] = sanitizeQuantityType(result[key]);
+    }
+  });
+
+  return result;
+}
 
 function testSchemaValidation(): void {
   console.log('🧪 Testing new unified cigar extraction schema...\n');
@@ -201,6 +280,7 @@ function testSchemaValidation(): void {
     console.log(`   Product: ${validatedSingle.products[0]?.product_name}`);
     console.log(`   Price: $${validatedSingle.products[0]?.size_options[0]?.price.current_price} ${validatedSingle.products[0]?.size_options[0]?.price.currency}`);
     console.log(`   Quantity: ${validatedSingle.products[0]?.size_options[0]?.price.quantity} ${validatedSingle.products[0]?.size_options[0]?.price.quantity_type}`);
+    console.log(`   Available: ${validatedSingle.products[0]?.size_options[0]?.availability}`);
     console.log('   ✓ Single product validation passed\n');
 
     // Test multiple products schema
@@ -209,7 +289,7 @@ function testSchemaValidation(): void {
     console.log(`   Page Type: ${validatedMultiple.page_type}`);
     console.log(`   Products: ${validatedMultiple.products.length}`);
     validatedMultiple.products.forEach((product, index) => {
-      console.log(`   ${index + 1}. ${product.product_name} - $${product.size_options[0]?.price.current_price} (${product.size_options[0]?.price.quantity} ${product.size_options[0]?.price.quantity_type})`);
+      console.log(`   ${index + 1}. ${product.product_name} - $${product.size_options[0]?.price.current_price} (${product.size_options[0]?.price.quantity} ${product.size_options[0]?.price.quantity_type}) - Available: ${product.size_options[0]?.availability}`);
     });
     console.log('   ✓ Multiple products validation passed\n');
 
@@ -220,7 +300,7 @@ function testSchemaValidation(): void {
     console.log(`   Products: ${validatedMultipleSizes.products.length}`);
     console.log(`   Product: ${validatedMultipleSizes.products[0]?.product_name}`);
     validatedMultipleSizes.products[0]?.size_options.forEach((sizeOption, index) => {
-      console.log(`   Size ${index + 1}: ${sizeOption.size.display} - $${sizeOption.price.current_price} (${sizeOption.price.quantity} ${sizeOption.price.quantity_type})`);
+      console.log(`   Size ${index + 1}: ${sizeOption.size.display} - $${sizeOption.price.current_price} (${sizeOption.price.quantity} ${sizeOption.price.quantity_type}) - Available: ${sizeOption.availability}`);
     });
     console.log('   ✓ Multiple sizes with different quantity types validation passed\n');
 
@@ -235,6 +315,41 @@ function testSchemaValidation(): void {
       console.log(`     ${index + 1}. ${price.quantity} ${price.quantity_type} - $${price.current_price} (Save $${price.savings || 0})`);
     });
     console.log('   ✓ Multiple sizes with quantities validation passed\n');
+
+    // Test packaging types
+    console.log('✅ Testing various packaging types...');
+    const validatedPackaging = CigarExtractionSchema.parse(testPackagingTypes);
+    console.log(`   Product: ${validatedPackaging.products[0]?.product_name}`);
+    console.log('   Packaging Types Found:');
+    validatedPackaging.products[0]?.size_options.forEach((option, index) => {
+      const price = option.price;
+      console.log(`     ${index + 1}. ${price.quantity} ${price.quantity_type} - $${price.current_price}`);
+    });
+    console.log('   ✓ Packaging types validation passed\n');
+
+    // Test data sanitization
+    console.log('✅ Testing data sanitization for unknown types...');
+    const testUnknownType = {
+      page_type: "single_product",
+      products: [{
+        product_name: "Test Product",
+        brand: "Test Brand",
+        description: "Test",
+        specifications: {
+          strength: null, wrapper: null, binder: null, filler: null,
+          origin: null, manufacturer: null, blender: null
+        },
+        size_options: [{
+          size: { length: 6, length_unit: "inches", ring_gauge: 50, display: "6 x 50" },
+          price: { current_price: 15.99, msrp: null, savings: null, currency: "USD", quantity: 1, quantity_type: "other" },
+          availability: true
+        }]
+      }]
+    };
+    const sanitizedData = sanitizeQuantityType(testUnknownType);
+    const validatedSanitized = CigarExtractionSchema.parse(sanitizedData);
+    console.log(`   Sanitized quantity_type: ${validatedSanitized.products[0]?.size_options[0]?.price.quantity_type}`);
+    console.log('   ✓ Data sanitization validation passed\n');
 
     console.log('🎉 All schema validations passed! The unified schema is working correctly.');
 

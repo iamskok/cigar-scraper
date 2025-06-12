@@ -26,7 +26,7 @@ export const PriceSchema = z.object({
   savings: z.number().nullable().describe("Dollar amount saved from MSRP as a decimal number WITHOUT currency symbols. Calculate as (MSRP - current_price) or extract from 'You Save' text. Set to null if no savings shown."),
   currency: z.string().nullable().describe("Currency code in standard 3-letter format (USD, EUR, GBP, CAD). Extract from currency symbols: $ = USD, € = EUR, £ = GBP. Default to 'USD' for US websites if currency symbol is $."),
   quantity: z.number().nullable().describe("Number of cigars included at this price (e.g., 1, 5, 20, 25). Extract from quantity indicators like 'Single', '5-Pack', 'Box of 20'. Set to 1 for single cigars, or null if unclear."),
-  quantity_type: z.enum(['single', 'pack', 'box', 'bundle', 'sampler']).nullable().describe("Type of quantity packaging: 'single' for individual cigars, 'pack' for small quantities (2-10), 'box' for standard boxes (10-25), 'bundle' for bulk packaging, 'sampler' for variety packs.")
+  quantity_type: z.enum(['single', 'pack', 'box', 'bundle', 'sampler', 'tin', 'tube', 'cabinet', 'case', 'sleeve', 'other', 'unspecified']).nullable().describe("Type of quantity packaging: 'single' for individual cigars, 'pack' for small quantities (2-10), 'box' for standard boxes (10-25), 'bundle' for bulk packaging, 'sampler' for variety packs, 'tin' for tin containers, 'tube' for tube packaging, 'cabinet' for cabinet boxes, 'case' for display cases, 'sleeve' for sleeve packaging, 'other' for any unlisted packaging type, 'unspecified' when packaging type is unclear or not mentioned.")
 });
 
 /**
@@ -48,7 +48,7 @@ export const SpecificationsSchema = z.object({
 export const SizePricingOptionSchema = z.object({
   size: SizeSchema,
   price: PriceSchema,
-  availability: z.string().nullable().describe("Stock status for this specific option (e.g., 'In Stock', 'Out of Stock', 'Limited', 'Backorder'). Set to null if not specified.")
+  availability: z.boolean().nullable().describe("Whether this item is available for purchase. Set to true if you can find 'Add to Cart', 'Buy Now', 'In Stock', or similar purchase buttons/text. Set to false if you see 'Out of Stock', 'Sold Out', 'Unavailable', disabled purchase buttons, or clear unavailability indicators. Set to null only if availability cannot be determined from the page content.")
 });
 
 /**
@@ -215,8 +215,8 @@ export function getOpenAIFunctionSchema(): {
                         },
                         quantity_type: {
                           type: ["string", "null"],
-                          enum: ["single", "pack", "box", "bundle", "sampler", null],
-                          description: "Type of quantity packaging: 'single' for individual cigars, 'pack' for small quantities (2-10), 'box' for standard boxes (10-25), 'bundle' for bulk packaging, 'sampler' for variety packs."
+                          enum: ["single", "pack", "box", "bundle", "sampler", "tin", "tube", "cabinet", "case", "sleeve", "other", "unspecified", null],
+                          description: "Type of quantity packaging: 'single' for individual cigars, 'pack' for small quantities (2-10), 'box' for standard boxes (10-25), 'bundle' for bulk packaging, 'sampler' for variety packs, 'tin' for tin containers, 'tube' for tube packaging, 'cabinet' for cabinet boxes, 'case' for display cases, 'sleeve' for sleeve packaging, 'other' for any unlisted packaging type, 'unspecified' when packaging type is unclear or not mentioned."
                         }
                       },
                       required: ["current_price", "msrp", "savings", "currency", "quantity", "quantity_type"],

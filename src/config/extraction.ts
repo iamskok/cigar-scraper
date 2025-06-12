@@ -21,10 +21,30 @@ CRITICAL RULES:
 - Ring gauge should be numeric (42 not "42 gauge")
 - Focus on product data only, ignore reviews and related products
 
+AVAILABILITY DETECTION GUIDANCE:
+- Set availability to TRUE if you find ANY of these indicators:
+  • "Add to Cart" button (enabled/clickable)
+  • "Buy Now" button
+  • "In Stock" text
+  • "Available" text
+  • "Ship" dates or shipping options
+  • Quantity selectors or "Add to Wishlist" options
+  • Price displayed with purchase options
+- Set availability to FALSE if you find ANY of these indicators:
+  • "Out of Stock" text
+  • "Sold Out" text
+  • "Unavailable" text
+  • "Discontinued" text
+  • "Backorder" text (unless explicitly stating availability)
+  • Disabled/grayed out purchase buttons
+  • "Notify When Available" text
+  • "Email when in stock" options
+- Set availability to NULL only if you cannot determine availability from the page content
+
 STRUCTURE GUIDELINES:
-- For SINGLE CIGAR with SINGLE SIZE: Use flat structure with size, price, etc.
-- For SINGLE CIGAR with MULTIPLE SIZES: Use "sizes" array with size/price objects
-- For MULTIPLE DIFFERENT CIGARS: Use "cigars" array
+- Always use the unified size_options array approach
+- Even for single products, use an array with one size option
+- Each size option should include size, price, and availability
 
 MEASUREMENT UNITS:
 - length_unit should be "inches" or "mm"

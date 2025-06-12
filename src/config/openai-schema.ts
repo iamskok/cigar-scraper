@@ -72,14 +72,14 @@ export const CIGAR_EXTRACTION_SCHEMA = {
                         savings: { type: ["number", "null"], description: "Savings amount as number without currency" },
                         currency: { type: ["string", "null"], description: "Currency code like USD, EUR, GBP" },
                         quantity: { type: ["number", "null"], description: "Number of cigars included at this price (e.g., 1, 5, 20, 25)" },
-                        quantity_type: { type: ["string", "null"], enum: ["single", "pack", "box", "bundle", "sampler", null], description: "Type of quantity packaging" }
+                        quantity_type: { type: ["string", "null"], enum: ["single", "pack", "box", "bundle", "sampler", "tin", "tube", "cabinet", "case", "sleeve", "other", "unspecified", null], description: "Type of quantity packaging" }
                       },
                       required: ["current_price", "msrp", "savings", "currency", "quantity", "quantity_type"],
                       additionalProperties: false
                     },
                     availability: {
-                      type: ["string", "null"],
-                      description: "Stock status for this specific option"
+                      type: ["boolean", "null"],
+                      description: "Whether this item is available for purchase. Set to true if you can find 'Add to Cart', 'Buy Now', 'In Stock', or similar purchase buttons/text. Set to false if you see 'Out of Stock', 'Sold Out', 'Unavailable', disabled purchase buttons, or clear unavailability indicators. Set to null only if availability cannot be determined from the page content."
                     }
                   },
                   required: ["size", "price", "availability"],

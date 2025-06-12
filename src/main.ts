@@ -32,7 +32,7 @@ export async function runScraper(config: ScraperConfig): Promise<{
   metadata: Record<string, unknown>;
   outputPath: string;
 }> {
-  console.log('🚀 Starting Cigar Scraper v2.0');
+  console.log('🚀 Starting Cigar Scraper');
   console.log('================================');
 
   // Ensure we're working with a single URL for this function

@@ -2,7 +2,7 @@
  * Environment and connection diagnostic script
  */
 
-import { getEnvironmentConfig } from './utils/validation.js';
+import { getEnvironmentConfig } from '../src/utils/validation.js';
 import puppeteer from 'puppeteer-core';
 
 async function diagnoseEnvironment(): Promise<void> {

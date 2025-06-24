@@ -19,5 +19,5 @@
     "noImplicitThis": false,
     "strictNullChecks": true
   },
-  "include": ["src/**/*", "__tests__/**/*"]
+  "include": ["src/**/*", "__tests__/**/*", "tests/diagnose-environment.ts", "tests/analyze-results.ts", "tests/test-real-data-validation.ts", "tests/test-schema-validation.ts", "tests/test-single-url.ts", "tests/test-single.ts"]
 }

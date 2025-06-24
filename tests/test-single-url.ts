@@ -1,15 +1,14 @@
 /**
- * Test script for single URL extraction
+ * Simple test script for single URL extraction
  */
 
-import { runScraper } from './main.js';
-import { getEnvironmentConfig } from './utils/validation.js';
-import type { ScraperConfig } from './types/index.js';
+import { runScraper } from '../src/main.js';
+import { getEnvironmentConfig } from '../src/utils/validation.js';
 
 async function testSingleUrl(): Promise<void> {
   const env = getEnvironmentConfig();
 
-  const config: ScraperConfig = {
+  const config = {
     url: 'https://www.neptunecigar.com/cigars/highclere-castle-petite-corona',
     browserEndpoint: env.BRIGHT_DATA_BROWSER_WSE_ENDPOINT,
     processOptions: {
@@ -35,23 +34,24 @@ async function testSingleUrl(): Promise<void> {
       },
     },
     extractionConfig: {
-      strategy: 'markdown-with-image',
+      strategy: 'markdown-with-image' as const,
       model: 'gpt-4o-2024-08-06',
       maxTokens: 4096,
       temperature: 0,
     },
-    outputDir: 'data',
+    outputDir: 'data-test',
   };
 
   try {
-    console.log('Testing single URL extraction...');
+    console.log('🧪 Testing single URL extraction...');
     const result = await runScraper(config);
-    console.log('✅ Single URL test completed successfully!');
-    console.log(`📁 Results: ${result.outputPath}`);
-    console.log(`📊 Extracted data:`, JSON.stringify(result.extractedData, null, 2));
+
+    console.log('\n✅ Extraction completed!');
+    console.log('📊 Extracted Data:');
+    console.log(JSON.stringify(result.extractedData, null, 2));
+
   } catch (error) {
-    console.error('❌ Single URL test failed:', error);
-    process.exit(1);
+    console.error('❌ Test failed:', error);
   }
 }
 

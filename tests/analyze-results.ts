@@ -4,7 +4,7 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import type { CigarExtractionType } from './types/cigar-schema.js';
+import type { CigarExtractionType } from '../src/types/cigar-schema.js';
 
 // Legacy format types for backward compatibility
 interface LegacyCigar {

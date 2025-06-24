@@ -2,7 +2,7 @@
  * Test the new unified schema without making actual API calls
  */
 
-import { CigarExtractionSchema } from './types/cigar-schema.js';
+import { CigarExtractionSchema } from '../src/types/cigar-schema.js';
 
 // Test data for the new flexible schema
 const testSingleProduct = {

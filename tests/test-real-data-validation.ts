@@ -2,8 +2,8 @@
  * Test script to validate real extraction data against the new schema
  */
 
-import { CigarExtractionSchema } from './types/cigar-schema.js';
-import { sanitizeExtractionData } from './utils/validation.js';
+import { CigarExtractionSchema } from '../src/types/cigar-schema.js';
+import { sanitizeExtractionData } from '../src/utils/validation.js';
 
 // Simulate real data that had the "tin" error
 const realDataWithTin = {

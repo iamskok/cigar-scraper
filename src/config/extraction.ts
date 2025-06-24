@@ -23,22 +23,19 @@ CRITICAL RULES:
 
 AVAILABILITY DETECTION GUIDANCE:
 - Set availability to TRUE if you find ANY of these indicators:
-  • "Add to Cart" button (enabled/clickable)
-  • "Buy Now" button
-  • "In Stock" text
-  • "Available" text
-  • "Ship" dates or shipping options
-  • Quantity selectors or "Add to Wishlist" options
-  • Price displayed with purchase options
+  - "Add to Cart" button (enabled/clickable)
+  - "Buy Now" button
+  - "In Stock" text
+  - "Available" text
 - Set availability to FALSE if you find ANY of these indicators:
-  • "Out of Stock" text
-  • "Sold Out" text
-  • "Unavailable" text
-  • "Discontinued" text
-  • "Backorder" text (unless explicitly stating availability)
-  • Disabled/grayed out purchase buttons
-  • "Notify When Available" text
-  • "Email when in stock" options
+  - "Out of Stock" text
+  - "Sold Out" text
+  - "Unavailable" text
+  - "Discontinued" text
+  - "Backorder" text (unless explicitly stating availability)
+  - Disabled/grayed out purchase buttons
+  - "Notify When Available" text
+  - "Email when in stock" options
 - Set availability to NULL only if you cannot determine availability from the page content
 
 STRUCTURE GUIDELINES:
@@ -94,10 +91,42 @@ export const MODEL_CONFIGS = {
     description: 'GPT-4o model with vision capabilities',
     supportsImages: true,
   },
-  'gpt-4-turbo': {
+  // New models to add
+  'o1': {
+    maxTokens: 8192,
+    description: 'O1 model with advanced capabilities',
+    supportsImages: true,
+  },
+  'o1-preview': {
+    maxTokens: 8192,
+    description: 'Preview version of O1 model',
+    supportsImages: true,
+  },
+  'o3': {
+    maxTokens: 8192,
+    description: 'O3 model with strong parsing capabilities',
+    supportsImages: true,
+  },
+  'gpt-4.1': {
+    maxTokens: 8192,
+    description: 'GPT-4.1 with improved context understanding',
+    supportsImages: true,
+  },
+  'gpt-4.5-preview': {
+    maxTokens: 8192,
+    description: 'Preview of GPT-4.5 with enhanced capabilities',
+    supportsImages: true,
+  },
+  // Smaller/faster models for simpler tasks
+  'gpt-4.1-mini': {
     maxTokens: 4096,
-    description: 'GPT-4 Turbo model',
-    supportsImages: false,
+    description: 'Smaller GPT-4.1 variant with good performance',
+    supportsImages: true,
+  },
+  'o4-mini': {
+    maxTokens: 4096,
+    description: 'Compact O4 model suitable for basic parsing',
+    supportsImages: true,
   },
 } as const;
 

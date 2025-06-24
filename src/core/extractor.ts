@@ -163,7 +163,8 @@ async function extractWithRetry(params: OpenAIParams): Promise<CigarExtractionTy
 
       console.log(`Making OpenAI API call with model: ${params.model} using structured outputs`);
 
-      const response = await openai.beta.chat.completions.parse({
+      // Using stable API instead of beta
+      const response = await openai.chat.completions.create({
         model: params.model,
         messages: params.messages,
         max_tokens: params.maxTokens,
@@ -171,10 +172,18 @@ async function extractWithRetry(params: OpenAIParams): Promise<CigarExtractionTy
         response_format: CIGAR_EXTRACTION_SCHEMA
       });
 
-      const parsed = response.choices[0]?.message?.parsed;
+      const content = response.choices[0]?.message?.content;
 
-      if (!parsed) {
-        throw new Error('No structured data received from OpenAI API');
+      if (!content) {
+        throw new Error('No content received from OpenAI API');
+      }
+
+      // Parse the JSON response
+      let parsed;
+      try {
+        parsed = JSON.parse(content);
+      } catch (error) {
+        throw new Error(`Failed to parse OpenAI response as JSON: ${error}`);
       }
 
       console.log(`OpenAI structured extraction successful. Usage: ${JSON.stringify(response.usage)}`);

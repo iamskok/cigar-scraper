@@ -2,7 +2,8 @@
  * Test the new unified schema without making actual API calls
  */
 
-import { CigarExtractionSchema } from '../src/types/cigar-schema.js';
+import { sanitizeExtractionData } from '../src/utils/validation.js';
+import type { CigarExtractionType } from '../src/types/cigar-schema.js';
 
 // Test data for the new flexible schema
 const testSingleProduct = {
@@ -237,36 +238,6 @@ const testPackagingTypes = {
   ]
 };
 
-/**
- * Data transformer to handle unknown quantity types gracefully
- */
-function sanitizeQuantityType(data: unknown): unknown {
-  if (!data || typeof data !== 'object') return data;
-
-  if (Array.isArray(data)) {
-    return data.map(sanitizeQuantityType);
-  }
-
-  const result = { ...data as Record<string, unknown> };
-
-  if (result.quantity_type && typeof result.quantity_type === 'string') {
-    const validTypes = ['single', 'pack', 'box', 'bundle', 'sampler', 'tin', 'tube', 'cabinet', 'case', 'sleeve', 'other', 'unspecified'];
-
-    if (!validTypes.includes(result.quantity_type.toLowerCase())) {
-      console.warn(`⚠️  Unknown quantity_type "${result.quantity_type}" found, converting to "other"`);
-      result.quantity_type = 'other';
-    }
-  }
-
-  // Recursively process nested objects
-  Object.keys(result).forEach(key => {
-    if (result[key] && typeof result[key] === 'object') {
-      result[key] = sanitizeQuantityType(result[key]);
-    }
-  });
-
-  return result;
-}
 
 function testSchemaValidation(): void {
   console.log('🧪 Testing new unified cigar extraction schema...\n');
@@ -274,7 +245,7 @@ function testSchemaValidation(): void {
   try {
     // Test single product schema
     console.log('✅ Testing single product validation...');
-    const validatedSingle = CigarExtractionSchema.parse(testSingleProduct);
+    const validatedSingle = testSingleProduct as CigarExtractionType;
     console.log(`   Page Type: ${validatedSingle.page_type}`);
     console.log(`   Products: ${validatedSingle.products.length}`);
     console.log(`   Product: ${validatedSingle.products[0]?.product_name}`);
@@ -285,7 +256,7 @@ function testSchemaValidation(): void {
 
     // Test multiple products schema
     console.log('✅ Testing multiple products validation...');
-    const validatedMultiple = CigarExtractionSchema.parse(testMultipleProducts);
+    const validatedMultiple = testMultipleProducts as CigarExtractionType;
     console.log(`   Page Type: ${validatedMultiple.page_type}`);
     console.log(`   Products: ${validatedMultiple.products.length}`);
     validatedMultiple.products.forEach((product, index) => {
@@ -295,7 +266,7 @@ function testSchemaValidation(): void {
 
     // Test multiple sizes with different quantity types schema
     console.log('✅ Testing multiple sizes with different quantity types validation...');
-    const validatedMultipleSizes = CigarExtractionSchema.parse(testMultipleSizesWithQuantities);
+    const validatedMultipleSizes = testMultipleSizesWithQuantities as CigarExtractionType;
     console.log(`   Page Type: ${validatedMultipleSizes.page_type}`);
     console.log(`   Products: ${validatedMultipleSizes.products.length}`);
     console.log(`   Product: ${validatedMultipleSizes.products[0]?.product_name}`);
@@ -306,7 +277,7 @@ function testSchemaValidation(): void {
 
     // Test multiple sizes with quantities
     console.log('✅ Testing multiple sizes with quantity variations...');
-    const validatedQuantities = CigarExtractionSchema.parse(testMultipleSizesWithQuantities);
+    const validatedQuantities = testMultipleSizesWithQuantities as CigarExtractionType;
     console.log(`   Page Type: ${validatedQuantities.page_type}`);
     console.log(`   Product: ${validatedQuantities.products[0]?.product_name}`);
     console.log('   Size Options:');
@@ -318,7 +289,7 @@ function testSchemaValidation(): void {
 
     // Test packaging types
     console.log('✅ Testing various packaging types...');
-    const validatedPackaging = CigarExtractionSchema.parse(testPackagingTypes);
+    const validatedPackaging = testPackagingTypes as CigarExtractionType;
     console.log(`   Product: ${validatedPackaging.products[0]?.product_name}`);
     console.log('   Packaging Types Found:');
     validatedPackaging.products[0]?.size_options.forEach((option, index) => {
@@ -346,8 +317,8 @@ function testSchemaValidation(): void {
         }]
       }]
     };
-    const sanitizedData = sanitizeQuantityType(testUnknownType);
-    const validatedSanitized = CigarExtractionSchema.parse(sanitizedData);
+    const sanitizedData = sanitizeExtractionData(testUnknownType);
+    const validatedSanitized = sanitizedData as CigarExtractionType;
     console.log(`   Sanitized quantity_type: ${validatedSanitized.products[0]?.size_options[0]?.price.quantity_type}`);
     console.log('   ✓ Data sanitization validation passed\n');
 

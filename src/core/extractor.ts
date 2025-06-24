@@ -15,7 +15,7 @@ import type {
   OpenAIParams,
   ExtractionStrategy
 } from '../types/index.js';
-import { CigarExtractionSchema, type CigarExtractionType } from '../types/cigar-schema.js';
+import type { CigarExtractionType } from '../types/cigar-schema.js';
 import { CIGAR_EXTRACTION_SCHEMA } from '../config/openai-schema.js';
 import { getErrorDetails, sanitizeExtractionData } from '../utils/validation.js';
 import { sanitizeForLLM } from './processor.js';
@@ -182,9 +182,8 @@ async function extractWithRetry(params: OpenAIParams): Promise<CigarExtractionTy
       // Sanitize data to handle unknown quantity types gracefully
       const sanitizedData = sanitizeExtractionData(parsed);
 
-      // Validate with Zod schema
-      const validated = CigarExtractionSchema.parse(sanitizedData);
-      return validated;
+      // Return the sanitized data - OpenAI structured outputs already enforce the schema
+      return sanitizedData as CigarExtractionType;
     },
     params.retryOptions
   );

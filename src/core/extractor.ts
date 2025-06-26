@@ -156,6 +156,17 @@ async function prepareImageContent(screenshotPath: string): Promise<ChatCompleti
  */
 async function extractWithRetry(params: OpenAIParams): Promise<CigarExtractionType> {
   return pRetry(
+    /**
+     * Performs a structured extraction using OpenAI's chat completion API.
+     * @param {Object} params - The parameters for the API call.
+     * @param {string} params.apiKey - The API key for OpenAI.
+     * @param {string} params.model - The model to use for the chat completion.
+     * @param {Array} params.messages - The messages to send to the chat completion API.
+     * @param {number} params.maxTokens - The maximum number of tokens to generate.
+     * @param {number} params.temperature - The temperature setting for response generation.
+     * @returns {Promise<CigarExtractionType>} A promise that resolves to the sanitized extraction data.
+     * @throws {Error} If no content is received from the OpenAI API or if the response cannot be parsed as JSON.
+     */
     async () => {
       const openai = new OpenAI({
         apiKey: params.apiKey,

@@ -101,6 +101,10 @@ export function formatByteSize(bytes: number): string {
  * @returns UUID string
  */
 export function generateUUID(): string {
+  /**
+   * Generates a RFC4122 version 4 compliant UUID
+   * @returns {string} A randomly generated UUID
+   */
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
     const r = Math.random() * 16 | 0;
     const v = c === 'x' ? r : (r & 0x3 | 0x8);

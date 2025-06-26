@@ -239,6 +239,13 @@ const testPackagingTypes = {
 };
 
 
+/**
+ * Validates and tests the unified cigar extraction schema with various scenarios.
+ * This function performs multiple tests to ensure the schema correctly handles
+ * different product types, quantities, packaging, and data sanitization.
+ * @returns {void} This function doesn't return a value but logs test results to the console.
+ * @throws {Error} If any schema validation fails, an error is logged and the process exits.
+ */
 function testSchemaValidation(): void {
   console.log('🧪 Testing new unified cigar extraction schema...\n');
 

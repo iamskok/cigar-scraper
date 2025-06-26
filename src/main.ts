@@ -115,7 +115,7 @@ export async function runScraper(config: ScraperConfig): Promise<{
     // Step 6: Extract data using AI
     // Uses configurable strategies to extract structured data via OpenAI
     console.log('\n🤖 Extracting data with AI...');
-    const extractionConfig = createExtractionConfig(config.extractionConfig);
+    const extractionConfig = config.extractionConfig || createExtractionConfig();
 
     console.log(`   • Strategy: ${extractionConfig.strategy}`);
     console.log(`   • Model: ${extractionConfig.model}`);
@@ -142,12 +142,20 @@ export async function runScraper(config: ScraperConfig): Promise<{
 
     console.log(`✅ Extracted data saved`);
 
-    // Step 8: Generate summary
-    // Create human-readable summary of extraction results
-    console.log('\n📊 Extraction Summary:');
+    // Step 8: Generate and save summary
+    // Create human-readable summary of extraction results and save it
+    console.log('\n📊 Generating extraction summary...');
+    const summaryResult = createExtractionSummary(extractedData, extractionConfig, targetUrl);
+
+    // Save summary to file
+    await fileManager.writeFile({
+      content: summaryResult.summary,
+      contentType: 'summary'
+    });
+
     console.log('========================');
-    const summary = createExtractionSummary(extractedData, extractionConfig);
-    console.log(summary);
+    console.log(summaryResult.summary);
+    console.log('========================');
 
     // Step 9: Cleanup
     // Clean up temporary files and finalize session
@@ -294,6 +302,7 @@ async function main(): Promise<void> {
     'https://www.neptunecigar.com/cigar/highclere-castle-edwardian',      // Same blend, different sizes
     'https://www.neptunecigar.com/search?text=foundation',                // Multiple different blends and sizes
     'https://www.neptunecigar.com/cigars',                               // Multiple different brands and their blends and sizes
+    'https://www.cigarpage.com/arturo-fuente-hemingway.html', // Single brand with multiple blends and sizes
   ];
 
   // Configuration for the scraping operation
@@ -325,14 +334,6 @@ async function main(): Promise<void> {
         removeTwitterMarkup: true, // Remove Twitter card tags
         removeJSONLDMarkup: false, // Keep JSON-LD structured data
       },
-    },
-
-    // AI extraction configuration
-    extractionConfig: {
-      strategy: 'markdown-with-image', // Best accuracy with visual context
-      model: 'gpt-4o-2024-08-06',     // Latest GPT-4o with vision
-      maxTokens: 4096,                // Sufficient for detailed extraction
-      temperature: 0,                 // Deterministic responses
     },
 
     // Output directory for organized file storage

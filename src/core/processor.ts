@@ -31,6 +31,10 @@ const DEFAULT_CLEAN_OPTIONS: CleanHTMLOptions = {
   removeOGMarkup: true,
   removeTwitterMarkup: true,
   removeJSONLDMarkup: false,
+  removeComments: true,
+  removeEmptyElements: true,
+  removeSocialWidgets: true,
+  removeCookieNotices: true,
 };
 
 /**
@@ -113,19 +117,26 @@ function cleanHTML(html: string, options: CleanHTMLOptions): string {
       $('style').remove();
     }
 
-    // Remove advertisement content
+    // Remove advertisement content with more comprehensive patterns
     if (options.removeAds) {
       // Common ad selectors
       $('[class*="ad-"], [id*="ad-"], [class*="advertisement"], [id*="advertisement"]').remove();
-      $('[class*="google-ad"], [id*="google-ad"]').remove();
-      $('.ad, #ad, .ads, #ads').remove();
+      $('[class*="google-ad"], [id*="google-ad"], [class*="adsense"], [id*="adsense"]').remove();
+      $('.ad, #ad, .ads, #ads, .advert, .advertisement, .sponsored').remove();
+      $('[class*="banner"], [id*="banner"], [class*="promo"], [id*="promo"]').remove();
+      $('[data-ad], [data-ads], [data-advertisement]').remove();
+      // Remove common ad networks and tracking
+      $('[class*="doubleclick"], [class*="googlesyndication"], [class*="amazon-adsystem"]').remove();
     }
 
-    // Remove hidden elements
+    // Remove hidden elements with more patterns
     if (options.removeHiddenElements) {
       $('[style*="display:none"], [style*="display: none"]').remove();
       $('[style*="visibility:hidden"], [style*="visibility: hidden"]').remove();
-      $('[hidden]').remove();
+      $('[hidden], [aria-hidden="true"]').remove();
+      // Remove elements with zero dimensions
+      $('[style*="width:0"], [style*="height:0"], [style*="opacity:0"]').remove();
+      $('[style*="width: 0"], [style*="height: 0"], [style*="opacity: 0"]').remove();
     }
 
     // Remove inline event handlers
@@ -154,28 +165,39 @@ function cleanHTML(html: string, options: CleanHTMLOptions): string {
       $('iframe').remove();
     }
 
-    // Remove header layout
+    // Remove header layout with more comprehensive patterns
     if (options.removeHeaderLayout) {
       $('header, #header, .header').remove();
       $('[class*="header"], [id*="header"]').remove();
-      $('nav, #nav, .nav').remove();
+      $('nav, #nav, .nav, .navbar, .navigation').remove();
+      $('[role="banner"], [role="navigation"]').remove();
+      $('.masthead, .top-bar, .site-header, .page-header').remove();
     }
 
-    // Remove footer layout
+    // Remove footer layout with more comprehensive patterns
     if (options.removeFooterLayout) {
       $('footer, #footer, .footer').remove();
       $('[class*="footer"], [id*="footer"]').remove();
+      $('[role="contentinfo"]').remove();
+      $('.site-footer, .page-footer, .bottom-bar').remove();
     }
 
-    // Remove base64 content
+    // Remove base64 content with improved detection
     if (options.removeBase64) {
       const threshold = options.base64Threshold || 50;
       $('*').each((_, element) => {
         const $element = $(element);
         const text = $element.text();
 
-        if (text.length > threshold && /^[A-Za-z0-9+/]+=*$/.test(text.trim())) {
-          $element.remove();
+        // Improved base64 detection
+        if (text.length > threshold) {
+          // Check for base64 patterns (more strict)
+          const base64Pattern = /^[A-Za-z0-9+/]{4,}={0,2}$/;
+          const dataUrlPattern = /data:[^;]+;base64,/;
+
+          if (base64Pattern.test(text.trim()) || dataUrlPattern.test(text)) {
+            $element.remove();
+          }
         }
       });
     }
@@ -198,6 +220,38 @@ function cleanHTML(html: string, options: CleanHTMLOptions): string {
     // Remove JSON-LD markup
     if (options.removeJSONLDMarkup) {
       $('script[type="application/ld+json"]').remove();
+    }
+
+    // Remove comments and unnecessary whitespace
+    if (options.removeComments !== false) { // Default to true
+      $('*').contents().filter(function() {
+        return this.nodeType === 8; // Comment nodes
+      }).remove();
+    }
+
+    // Remove empty paragraphs and divs
+    if (options.removeEmptyElements !== false) { // Default to true
+      $('p:empty, div:empty, span:empty').remove();
+      // Remove elements that only contain whitespace
+      $('p, div, span').each((_, element) => {
+        const $element = $(element);
+        if ($element.text().trim() === '' && $element.children().length === 0) {
+          $element.remove();
+        }
+      });
+    }
+
+    // Remove social media widgets and buttons
+    if (options.removeSocialWidgets) {
+      $('.social, .share, .facebook, .twitter, .instagram, .linkedin').remove();
+      $('[class*="social"], [class*="share"], [class*="fb-"], [class*="twitter-"]').remove();
+      $('[data-social], [data-share]').remove();
+    }
+
+    // Remove cookie notices and popups
+    if (options.removeCookieNotices) {
+      $('[class*="cookie"], [id*="cookie"], [class*="gdpr"], [id*="gdpr"]').remove();
+      $('[class*="consent"], [id*="consent"], [class*="privacy"], [id*="privacy"]').remove();
     }
 
     // Clean up empty elements and normalize whitespace

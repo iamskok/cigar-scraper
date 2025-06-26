@@ -208,6 +208,12 @@ export class FileManager {
           subfolder: 'extractedData',
         };
 
+      case 'summary':
+        return {
+          fileName: `summary${suffixPart}.txt`,
+          subfolder: 'extractedData',
+        };
+
       case 'screenshot':
         return {
           fileName: `screenshot${suffixPart}_${timestamp}.png`,

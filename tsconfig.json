@@ -7,6 +7,7 @@
     "rootDir": ".",
     "outDir": "build",
     "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
     "importHelpers": true,
     "alwaysStrict": true,
     "sourceMap": true,
@@ -19,5 +20,6 @@
     "noImplicitThis": false,
     "strictNullChecks": true
   },
-  "include": ["src/**/*", "__tests__/**/*", "tests/diagnose-environment.ts", "tests/analyze-results.ts", "tests/test-real-data-validation.ts", "tests/test-schema-validation.ts", "tests/test-single-url.ts", "tests/test-single.ts"]
+  "include": ["src/**/*", "__tests__/**/*"],
+  "exclude": ["tests/**/*", "node_modules/**/*"]
 }

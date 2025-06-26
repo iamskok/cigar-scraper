@@ -308,24 +308,77 @@ function validateExtractionConfig(config: ExtractionConfig): void {
 }
 
 /**
- * Create extraction summary for logging
+ * Create extraction summary with meaningful information
  */
-export function createExtractionSummary(result: unknown, config: ExtractionConfig): string {
-  const summary = [
-    `Extraction Strategy: ${config.strategy}`,
+export function createExtractionSummary(result: unknown, config: ExtractionConfig, sourceUrl: string): {
+  summary: string;
+  metadata: Record<string, unknown>;
+} {
+  const timestamp = new Date().toISOString();
+
+  const summaryLines = [
+    `=== CIGAR EXTRACTION SUMMARY ===`,
+    `Timestamp: ${timestamp}`,
+    `Source URL: ${sourceUrl}`,
+    `Strategy: ${config.strategy}`,
     `Model: ${config.model}`,
     `Temperature: ${config.temperature}`,
     `Max Tokens: ${config.maxTokens}`,
+    ``
   ];
 
+  // Extract meaningful product information if available
   if (typeof result === 'object' && result !== null) {
-    const keys = Object.keys(result);
-    summary.push(`Extracted Fields: ${keys.length}`);
+    const data = result as CigarExtractionType;
 
-    if (keys.length > 0) {
-      summary.push(`Fields: ${keys.slice(0, 5).join(', ')}${keys.length > 5 ? '...' : ''}`);
+    if (data.page_type) {
+      summaryLines.push(`Page Type: ${data.page_type}`);
+    }
+
+    if (data.products && Array.isArray(data.products)) {
+      summaryLines.push(`Products Found: ${data.products.length}`);
+
+      // Show actual product names and correct size count
+      data.products.forEach((product, index: number) => {
+        if (product.product_name || product.brand) {
+          const productName = product.product_name || 'Unknown Product';
+          const brand = product.brand || 'Unknown Brand';
+          // Support both new 'vitolas' structure and legacy 'size_options' for backward compatibility
+          let sizeCount = 0;
+          let offerCount = 0;
+          if (Array.isArray(product.vitolas)) {
+            sizeCount = product.vitolas.length;
+            // Count total offers across all vitolas
+            offerCount = product.vitolas.reduce((total: number, vitola) => {
+              return total + (Array.isArray(vitola.offers) ? vitola.offers.length : 0);
+            }, 0);
+          } else {
+            // Legacy structure support
+            const legacyProduct = product as unknown as { size_options?: unknown[] };
+            if (Array.isArray(legacyProduct.size_options)) {
+              sizeCount = legacyProduct.size_options.length;
+              offerCount = sizeCount; // Legacy: one offer per size
+            }
+          }
+
+          const offerText = offerCount > sizeCount ? ` (${offerCount} offers)` : '';
+          summaryLines.push(`  ${index + 1}. ${brand} - ${productName} (${sizeCount} sizes${offerText})`);
+        }
+      });
     }
   }
 
-  return summary.join('\\n');
+  const summary = summaryLines.join('\n');
+
+  const metadata = {
+    timestamp,
+    sourceUrl,
+    extractionStrategy: config.strategy,
+    model: config.model,
+    temperature: config.temperature,
+    maxTokens: config.maxTokens,
+    success: true
+  };
+
+  return { summary, metadata };
 }

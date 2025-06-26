@@ -74,6 +74,14 @@ export interface CleanHTMLOptions {
   removeTwitterMarkup?: boolean;
   /** Remove JSON-LD structured data */
   removeJSONLDMarkup?: boolean;
+  /** Remove HTML comments */
+  removeComments?: boolean;
+  /** Remove empty elements */
+  removeEmptyElements?: boolean;
+  /** Remove social media widgets and buttons */
+  removeSocialWidgets?: boolean;
+  /** Remove cookie notices and GDPR popups */
+  removeCookieNotices?: boolean;
 }
 
 /**
@@ -150,6 +158,7 @@ export type ContentType =
   | 'rawMarkdown'
   | 'cleanMarkdown'
   | 'extractedData'
+  | 'summary'
   | 'screenshot';
 
 /**

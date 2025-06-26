@@ -41,6 +41,13 @@ interface LegacyMultipleCigars {
 
 type AnalysisData = CigarExtractionType | LegacyCigar | LegacyMultipleCigars;
 
+/**
+ * Analyzes extracted cigar data from JSON files in a specified directory.
+ * This asynchronous function reads extracted data files, parses their content,
+ * and performs analysis on the data structure.
+ * @returns {Promise<void>} A promise that resolves when the analysis is complete.
+ * @throws {Error} If there's an error reading files or parsing JSON.
+ */
 async function analyzeExtractedData(): Promise<void> {
   const dataDir = '/Users/skok/dev/cigar-scraper/data';
   console.log('🔍 Analyzing extracted cigar data...\n');
@@ -62,6 +69,11 @@ async function analyzeExtractedData(): Promise<void> {
   }
 }
 
+/**
+ * Recursively searches for 'extracteddata.json' files in the given directory and its subdirectories.
+ * @param {string} dir - The root directory to start the search from.
+ * @returns {Promise<string[]>} A promise that resolves to an array of full paths to 'extracteddata.json' files.
+ */
 async function findExtractedFiles(dir: string): Promise<string[]> {
   const files: string[] = [];
   async function traverse(currentDir: string): Promise<void> {
@@ -79,6 +91,13 @@ async function findExtractedFiles(dir: string): Promise<string[]> {
   return files;
 }
 
+/**
+ * Analyzes and logs information about cigar product data structures.
+ * This function handles both new flexible schema format and legacy format data.
+ * It processes information such as product names, brands, sizes, prices, and specifications.
+ * @param {AnalysisData} data - The data structure to analyze, which can be in new or legacy format
+ * @returns {void} This function doesn't return a value, it logs information to the console
+ */
 function analyzeDataStructure(data: AnalysisData): void {
   // Handle new flexible schema format
   if ('page_type' in data && 'products' in data) {

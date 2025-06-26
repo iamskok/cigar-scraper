@@ -5,6 +5,17 @@
 import { getEnvironmentConfig } from '../src/utils/validation.js';
 import puppeteer from 'puppeteer-core';
 
+/**
+ * Diagnoses the environment and tests the browser connection.
+ * This asynchronous function performs the following steps:
+ * 1. Checks environment variables (OPENAI_API_KEY and BRIGHT_DATA_BROWSER_WSE_ENDPOINT)
+ * 2. Tests the browser connection using Puppeteer
+ * 3. Performs a simple navigation test to example.com
+ * 4. Logs the results of each step
+ * If any errors occur during the process, appropriate error messages are logged.
+ * @returns {Promise<void>} This function doesn't return a value, but logs diagnostic information to the console.
+ * @throws {Error} If there's an issue with environment variables or browser connection.
+ */
 async function diagnoseEnvironment(): Promise<void> {
   console.log('🔍 Diagnosing Environment and Connection...\n');
 

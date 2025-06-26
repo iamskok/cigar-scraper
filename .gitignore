@@ -33,3 +33,6 @@ build/
 
 # Scraped data
 data/
+
+build
+coverage

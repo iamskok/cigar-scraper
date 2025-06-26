@@ -1,14 +1,29 @@
 # TODO
 
+- create file saving functions for each module. E.g. processHTML will export saveProcessedHTML function that will use fileManager and will do all data checking and looping. Potentially just merge file saving functionality with the core module? The main goal is to remove all this bloat from main.ts. 
+- Update extraction schema to be an array of object + other todo. The goal is to be more generic.
+- Update extraction module so that it can take processHTML response and automatically convert images and construction messages.
+
 Priority:
 
 - Try having a hardcoded config of a website - container selectors with required information. It will be used by HTML/markdown and screenshot functionality.
   - implement puppeteer screnshots per selector
-- Come up with a list of all fields and their descriptions
+  - fix logic to save multiple chunks of extracted text and images
+  - use fileManager in scrape and other tasks to manage file name!!! 
+    - potentify add more methods to fileManager
+    - Replace `saveExtractedData` and `getPathFromUrl`
+      + update processHTML to make use of scrape return data
+    !!!-do not pass fileManager as a prop in other functions. Initialize it and import in files
+    !!!- convert selectors array to an object with human redable name and description
+    !!!-html cleanup for chunks needs to include removal of social media buttons/shares
+- Come up with a list of all fields and their descriptions.
+  - collect list of websites
+- come up with various prompts
 - Come up with golden data
 - How to benchmark scraped json objects?
+- add debug statements in the AI prompt. E.g. print JSON after every chunk and return array with JSON objects? Potentially disable structured output
 
-
+0. add real DB to the stack
 1. use brightdata remote browser
 2. try a few different options
   - submit generically clean html in chunks to the text model
@@ -42,6 +57,7 @@ Priority:
 - Use DOM purify or other sanitation tool
 - Calculate cost post request. Grab token count from response.
 - Come up with some abstraction for a scrape request lifecycle. Classify errors. Update statuses and stages (html extract, sanitization, cleanup, markdown, save etc)
+- add task to extract all images maybe based on some selector queries and make sure they are cigar images and save them them with description.
 ===
 - start with parsing sitemap.xml and filtering URLs. You will need a full website scrape the first run and then some sort of effective refetch mechanism potentially relying on sitemap.xml lastmod property. 
 - As a an improvement  to sitemap consider a recursive page-to-page parser to capture URLs that don’t exist in a browser.

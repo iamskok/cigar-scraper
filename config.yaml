@@ -1,0 +1,147 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# CIGAR SCRAPER CONFIGURATION
+# ══════════════════════════════════════════════════════════════════════════════
+# This file contains all configurable parameters for the cigar scraper.
+# All settings here are actively used by the application.
+
+# ──────────────────────────────────────────────────────────────────────────────
+# OPENAI CONFIGURATION
+# ──────────────────────────────────────────────────────────────────────────────
+openai:
+  default_model: "gpt-4o-2024-08-06"
+  extraction:
+    max_tokens: 4096
+    temperature: 0
+    retry_options:
+      retries: 3
+      min_timeout: 1000
+      factor: 2
+
+# ──────────────────────────────────────────────────────────────────────────────
+# EXTRACTION STRATEGIES
+# ──────────────────────────────────────────────────────────────────────────────
+extraction_strategies:
+  html-only:
+    description: "Process cleaned HTML content only (no images)"
+  markdown-only:
+    description: "Process markdown content only (no images)"
+  html-with-image:
+    description: "Process cleaned HTML content with full page screenshot"
+  markdown-with-image:
+    description: "Process markdown content with full page screenshot"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# DEFAULT EXTRACTION CONFIGURATION
+# ──────────────────────────────────────────────────────────────────────────────
+default_extraction_config:
+  strategy: "markdown-with-image"
+  model: "gpt-4o-2024-08-06"
+  max_tokens: 4096
+  temperature: 0
+
+# ──────────────────────────────────────────────────────────────────────────────
+# PRESET CONFIGURATIONS
+# ──────────────────────────────────────────────────────────────────────────────
+preset_configs:
+  fast:
+    strategy: "markdown-only"
+    model: "gpt-4o-2024-08-06"
+    max_tokens: 2048
+    temperature: 0
+  accurate:
+    strategy: "markdown-with-image"
+    model: "gpt-4o-2024-08-06"
+    max_tokens: 4096
+    temperature: 0
+  comprehensive:
+    strategy: "html-with-image"
+    model: "gpt-4o-2024-08-06"
+    max_tokens: 4096
+    temperature: 0
+    retry_options:
+      retries: 5
+      min_timeout: 2000
+      factor: 2
+
+# ──────────────────────────────────────────────────────────────────────────────
+# HTML PROCESSING CONFIGURATION
+# ──────────────────────────────────────────────────────────────────────────────
+html_processing:
+  default_clean_options:
+    remove_scripts: true
+    remove_styles: false
+    remove_ads: true
+    remove_hidden_elements: true
+    remove_inline_handlers: true
+    remove_inline_styles: false
+    remove_src_attributes: true
+    remove_href_attributes: true
+    remove_iframes: true
+    remove_header_layout: true
+    remove_footer_layout: true
+    remove_base64: true
+    base64_threshold: 50
+    remove_schema_markup: false
+    remove_og_markup: true
+    remove_twitter_markup: true
+    remove_jsonld_markup: false
+    remove_comments: true
+    remove_empty_elements: true
+    remove_social_widgets: true
+    remove_cookie_notices: true
+  default_process_options:
+    use_markdown: true
+
+# ──────────────────────────────────────────────────────────────────────────────
+# SYSTEM PROMPTS
+# ──────────────────────────────────────────────────────────────────────────────
+system_prompts:
+  default: |
+    You are a cigar product data extraction specialist. Extract structured product information from cigar retailer websites.
+
+    CRITICAL RULES:
+    - Use null for ANY missing information - DO NOT make up or guess data
+    - Extract prices as numbers without currency symbols (12.95 not $12.95)
+    - Use separate currency field (USD, EUR, GBP, etc.)
+    - Length should be numeric (5 not "5 inches") with separate unit field
+    - Ring gauge should be numeric (42 not "42 gauge")
+    - Focus on product data only, ignore reviews and related products
+
+    AVAILABILITY DETECTION GUIDANCE:
+    - Set availability to TRUE if you find ANY of these indicators:
+      - "Add to Cart" button (enabled/clickable)
+      - "Buy Now" button
+      - "In Stock" text
+      - "Available" text
+    - Set availability to FALSE if you find ANY of these indicators:
+      - "Out of Stock" text
+      - "Sold Out" text
+      - "Unavailable" text
+      - "Discontinued" text
+      - "Backorder" text (unless explicitly stating availability)
+      - Disabled/grayed out purchase buttons
+      - "Notify When Available" text
+      - "Email when in stock" options
+    - Set availability to NULL only if you cannot determine availability from the page content
+
+    STRUCTURE GUIDELINES:
+    - Group cigars by blend/line name (product_name)
+    - Each product should contain multiple vitolas (sizes) if available
+    - Each vitola can have multiple offers (different package types/quantities)
+
+    MEASUREMENT UNITS:
+    - length_unit should be "inches" or "mm"
+    - Most US sites use inches, European sites may use mm
+    - If unit is unclear, default to "inches" for US retailers
+
+    NEVER make up missing information. Use null values for any data not clearly visible.
+
+default_output_directory: "./data"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# FIELD EXPLANATIONS
+# ──────────────────────────────────────────────────────────────────────────────
+# temperature: Controls randomness (0=deterministic, 1=creative)
+# max_tokens: Maximum response length (4096 = ~1000 words)
+# retries: Number of retry attempts on failures
+# supports_images: Whether model can process screenshots

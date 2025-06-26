@@ -1,113 +1,296 @@
-# node-typescript-boilerplate
+# Cigar Data Extraction Pipeline
 
-[![Sponsor][sponsor-badge]][sponsor]
-[![TypeScript version][ts-badge]][typescript-5-4]
-[![Node.js version][nodejs-badge]][nodejs]
-[![APLv2][license-badge]][license]
-[![Build Status - GitHub Actions][gha-badge]][gha-ci]
+A modern TypeScript-based web scraper for extracting structured cigar product information from e-commerce websites using OpenAI's structured output APIs.
 
-👩🏻‍💻 Developer Ready: A comprehensive template. Works out of the box for most [Node.js][nodejs] projects.
+## Overview
 
-🏃🏽 Instant Value: All basic tools included and configured:
+This tool extracts cigar product data from various types of web pages (product pages, brand pages, search results, etc.) and converts unstructured HTML content into standardized, structured JSON data. It uses OpenAI's GPT models with structured output schemas to ensure consistent, reliable data extraction.
 
-- [TypeScript][typescript] [5.4][typescript-5-4]
-- [ESM][esm]
-- [ESLint][eslint] with some initial rules recommendation
-- [Jest][jest] for fast unit testing and code coverage
-- Type definitions for Node.js and Jest
-- [Prettier][prettier] to enforce consistent code style
-- NPM [scripts](#available-scripts) for common operations
-- [EditorConfig][editorconfig] for consistent coding style
-- Reproducible environments thanks to [Volta][volta]
-- Example configuration for [GitHub Actions][gh-actions]
-- Simple example of TypeScript code and unit test
+## Features
 
-🤲 Free as in speech: available under the APLv2 license.
+- **Multi-page Type Support**: Handles blend pages, brand pages, search results, and collection pages
+- **Hybrid Schema Architecture**: Flexible data model supporting complex pricing and packaging scenarios
+- **Robust Data Validation**: TypeScript types and schema validation ensure data integrity
+- **Comprehensive Logging**: Detailed extraction summaries and metadata tracking
+- **Configurable Extraction**: YAML-based configuration for different extraction scenarios
 
-## Getting Started
+## Architecture
 
-This project is intended to be used with the latest Active LTS release of [Node.js][nodejs].
+### Hybrid Schema Design
 
-### Use as a repository template
+This project uses a **hybrid vitola-offer model** that balances flexibility with real-world e-commerce requirements:
 
-To start, just click the **[Use template][repo-template-action]** link (or the green button). Start adding your code in the `src` and unit tests in the `__tests__` directories.
+```typescript
+Product → Vitolas[] → Offers[]
+```
 
-### Clone repository
+Each **Product** represents a cigar blend (e.g., "Highclere Castle Edwardian")
+Each **Vitola** represents a size/shape variation (e.g., "Corona", "Robusto") 
+Each **Offer** represents a pricing/packaging option (e.g., "Singles", "Box of 20", "5-Pack")
 
-To clone the repository, use the following commands:
+#### Schema Design Comparison
 
-```sh
-git clone https://github.com/jsynowiec/node-typescript-boilerplate
-cd node-typescript-boilerplate
+| Approach | Structure | Pros | Cons | Best Use Cases |
+|----------|-----------|------|------|----------------|
+| **Vitola-Centric** | `Product → Vitolas[]` (single price per vitola) | Simple, mirrors physical reality | Can't handle multiple packaging options | Basic catalogs with fixed pricing |
+| **Price-Centric** | `Product → Offers[]` (no size grouping) | Handles complex pricing well | Loses vitola relationships, harder to analyze | Pure e-commerce focus |
+| **Hybrid** ⭐ | `Product → Vitolas[] → Offers[]` | Best of both worlds, real-world flexibility | Slightly more complex | Modern e-commerce with multiple package sizes |
+
+#### Why We Chose the Hybrid Approach
+
+1. **Real-World Accuracy**: Cigar retailers often sell the same vitola in multiple packaging options (singles, 5-packs, boxes)
+2. **Data Integrity**: Preserves the relationship between cigar sizes and their pricing options
+3. **Analytical Power**: Enables analysis at both the vitola level (size preferences) and offer level (pricing strategies)
+4. **Future-Proof**: Accommodates complex scenarios like samplers, limited editions, and bulk pricing
+5. **Backward Compatibility**: Can easily be flattened to simpler models when needed
+
+#### Example Data Structure
+
+```json
+{
+  "product_name": "Highclere Castle Edwardian",
+  "brand": "Highclere Castle",
+  "vitolas": [
+    {
+      "name": "Corona",
+      "size": { "length": 5.5, "ring_gauge": 42 },
+      "offers": [
+        {
+          "current_price": 12.50,
+          "package_type": "single",
+          "cigars_per_package": 1,
+          "total_cigars": 1
+        },
+        {
+          "current_price": 62.50,
+          "package_type": "pack",
+          "cigars_per_package": 5,
+          "total_cigars": 5
+        },
+        {
+          "current_price": 225.00,
+          "package_type": "box",
+          "cigars_per_package": 20,
+          "total_cigars": 20
+        }
+      ]
+    },
+    {
+      "name": "Robusto",
+      "size": { "length": 5.0, "ring_gauge": 50 },
+      "offers": [
+        {
+          "current_price": 13.75,
+          "package_type": "single",
+          "cigars_per_package": 1,
+          "total_cigars": 1
+        }
+      ]
+    }
+  ]
+}
+```
+
+## Installation
+
+```bash
 npm install
 ```
 
-### Download latest release
+## Configuration
 
-Download and unzip the current **main** branch or one of the tags:
+The pipeline is configured via `config.yaml`:
 
-```sh
-wget https://github.com/jsynowiec/node-typescript-boilerplate/archive/main.zip -O node-typescript-boilerplate.zip
-unzip node-typescript-boilerplate.zip && rm node-typescript-boilerplate.zip
+```yaml
+extraction:
+  model: "gpt-4o-2024-08-06"  # OpenAI model for extraction
+  max_tokens: 16384           # Maximum response tokens
+  temperature: 0.1            # Low temperature for consistent extraction
+
+outputs:
+  save_extracted_data: true   # Save structured JSON output
+  save_summary: true          # Save human-readable summary
+  save_clean_html: true       # Save cleaned HTML
+  save_clean_markdown: true   # Save cleaned Markdown
+  save_raw_html: true         # Save original HTML
+  save_raw_markdown: true     # Save original Markdown conversion
+  save_screenshots: true      # Save page screenshots
 ```
 
-## Available Scripts
+## Usage
 
-- `clean` - remove coverage data, Jest cache and transpiled files,
-- `prebuild` - lint source files and tests before building,
-- `build` - transpile TypeScript to ES6,
-- `build:watch` - interactive watch mode to automatically transpile source files,
-- `lint` - lint source files and tests,
-- `prettier` - reformat files,
-- `test` - run tests,
-- `test:watch` - interactive watch mode to automatically re-run tests
+### Basic Usage
 
-## Additional Information
+```bash
+# Extract data from a single URL
+npm run build && node build/src/main.js --url "https://example-cigar-site.com/product-page"
 
-### Why include Volta
+# Extract with custom output directory
+npm run build && node build/src/main.js --url "https://example.com" --output-dir "./custom-output"
+```
 
-[Volta][volta]’s toolchain always keeps track of where you are, it makes sure the tools you use always respect the settings of the project you’re working on. This means you don’t have to worry about changing the state of your installed software when switching between projects. For example, it's [used by engineers at LinkedIn][volta-tomdale] to standardize tools and have reproducible development environments.
+### Testing and Validation
 
-I recommend to [install][volta-getting-started] Volta and use it to manage your project's toolchain.
+```bash
+# Run all tests
+npm test
 
-### ES Modules
+# Test schema validation with real data
+npm run test:schema
 
-This template uses native [ESM][esm]. Make sure to read [this][nodejs-esm], and [this][ts47-esm] first.
+# Test single URL extraction
+npm run test:single
 
-If your project requires CommonJS, you will have to [convert to ESM][sindresorhus-esm].
+# Analyze existing extraction results
+npm run analyze
+```
 
-Please do not open issues for questions regarding CommonJS or ESM on this repo.
+## Data Output
 
-## Backers & Sponsors
+For each extraction, the pipeline generates:
 
-Support this project by becoming a [sponsor][sponsor].
+- `extracteddata.json` - Structured product data
+- `summary.txt` - Human-readable extraction summary
+- `metadata.json` - Extraction metadata and configuration
+- `cleanHtml/` - Cleaned HTML content
+- `cleanMarkdown/` - Cleaned Markdown conversion
+- `rawHtml/` - Original HTML content
+- `rawMarkdown/` - Original Markdown conversion
+- `screenshots/` - Page screenshots
+
+### Summary Format
+
+The extraction summary provides a quick overview:
+
+```
+=== EXTRACTION SUMMARY ===
+URL: https://example.com/cigars/highclere-castle-edwardian
+Page Type: blend_page
+Timestamp: 2024-01-15T10:30:00.000Z
+
+Products Found: 1
+├── Highclere Castle Edwardian (Highclere Castle)
+    └── 3 vitolas, 7 offers total
+        ├── Corona (5.5" × 42): 3 offers
+        ├── Robusto (5" × 50): 2 offers  
+        └── Toro (6" × 52): 2 offers
+
+Total: 1 products, 3 vitolas, 7 offers
+```
+
+## Project Structure
+
+```
+├── src/
+│   ├── main.ts                 # Main CLI application
+│   ├── config/
+│   │   ├── extraction.ts       # Extraction configuration
+│   │   └── openai-schema.ts    # OpenAI structured output schema
+│   ├── core/
+│   │   ├── scraper.ts         # Web scraping functionality
+│   │   ├── processor.ts       # HTML processing and cleaning
+│   │   └── extractor.ts       # OpenAI-based data extraction
+│   ├── types/
+│   │   ├── cigar-schema.ts    # TypeScript type definitions
+│   │   └── index.ts           # Type exports
+│   └── utils/
+│       ├── fileManager.ts     # File I/O operations
+│       └── validation.ts      # Data validation utilities
+├── tests/                     # Test files
+├── config.yaml               # Main configuration file
+└── data/                     # Extracted data storage
+```
+
+## Development
+
+### Building
+
+```bash
+npm run build
+```
+
+### Testing
+
+```bash
+# Run all tests
+npm test
+
+# Run with coverage
+npm run test:coverage
+
+# Test specific functionality
+npm run test:schema          # Schema validation tests
+npm run test:single          # Single URL extraction test
+npm run test:real-data       # Real data validation tests
+```
+
+### Adding New Extractors
+
+1. Update the OpenAI schema in `src/config/openai-schema.ts`
+2. Update TypeScript types in `src/types/cigar-schema.ts`
+3. Add validation logic in `src/utils/validation.ts`
+4. Update summary generation in `src/core/extractor.ts`
+
+## API Reference
+
+### Main Classes
+
+#### `CigarScraper`
+Handles web scraping and page loading.
+
+#### `HtmlProcessor`  
+Processes and cleans HTML content for extraction.
+
+#### `CigarExtractor`
+Manages OpenAI-based structured data extraction.
+
+#### `FileManager`
+Handles all file I/O operations and data persistence.
+
+### Key Types
+
+#### `CigarExtractionType`
+Main extraction result containing page type and products array.
+
+#### `CigarProductType`
+Individual product with specifications and vitolas.
+
+#### `VitolaType`
+Cigar size/shape variation with offers array.
+
+#### `OfferType`
+Specific pricing/packaging option for a vitola.
+
+## Error Handling
+
+The pipeline includes comprehensive error handling:
+
+- **Network Errors**: Retry logic for failed requests
+- **Parsing Errors**: Graceful handling of malformed HTML
+- **Schema Validation**: Strict validation of extracted data
+- **File I/O Errors**: Safe file operations with error recovery
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Add tests for new functionality
+4. Ensure all tests pass
+5. Submit a pull request
 
 ## License
 
-Licensed under the APLv2. See the [LICENSE](https://github.com/jsynowiec/node-typescript-boilerplate/blob/main/LICENSE) file for details.
+MIT License - see LICENSE file for details.
 
-[ts-badge]: https://img.shields.io/badge/TypeScript-5.4-blue.svg
-[nodejs-badge]: https://img.shields.io/badge/Node.js->=%2020.9-blue.svg
-[nodejs]: https://nodejs.org/dist/latest-v20.x/docs/api/
-[gha-badge]: https://github.com/jsynowiec/node-typescript-boilerplate/actions/workflows/nodejs.yml/badge.svg
-[gha-ci]: https://github.com/jsynowiec/node-typescript-boilerplate/actions/workflows/nodejs.yml
-[typescript]: https://www.typescriptlang.org/
-[typescript-5-4]: https://devblogs.microsoft.com/typescript/announcing-typescript-5-4/
-[license-badge]: https://img.shields.io/badge/license-APLv2-blue.svg
-[license]: https://github.com/jsynowiec/node-typescript-boilerplate/blob/main/LICENSE
-[sponsor-badge]: https://img.shields.io/badge/♥-Sponsor-fc0fb5.svg
-[sponsor]: https://github.com/sponsors/jsynowiec
-[jest]: https://facebook.github.io/jest/
-[eslint]: https://github.com/eslint/eslint
-[wiki-js-tests]: https://github.com/jsynowiec/node-typescript-boilerplate/wiki/Unit-tests-in-plain-JavaScript
-[prettier]: https://prettier.io
-[volta]: https://volta.sh
-[volta-getting-started]: https://docs.volta.sh/guide/getting-started
-[volta-tomdale]: https://twitter.com/tomdale/status/1162017336699838467
-[gh-actions]: https://github.com/features/actions
-[repo-template-action]: https://github.com/jsynowiec/node-typescript-boilerplate/generate
-[esm]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules
-[sindresorhus-esm]: https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
-[nodejs-esm]: https://nodejs.org/docs/latest-v16.x/api/esm.html
-[ts47-esm]: https://devblogs.microsoft.com/typescript/announcing-typescript-4-7/#esm-nodejs
-[editorconfig]: https://editorconfig.org
+## Dependencies
+
+- **OpenAI**: GPT-based structured data extraction
+- **Playwright**: Web scraping and browser automation
+- **Turndown**: HTML to Markdown conversion
+- **js-yaml**: YAML configuration parsing
+- **Jest**: Testing framework
+- **TypeScript**: Type safety and development tooling
+
+---
+
+Built with ❤️ for the cigar community

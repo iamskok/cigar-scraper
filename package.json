@@ -1,7 +1,7 @@
 {
-  "name": "node-typescript-boilerplate",
-  "version": "0.0.0",
-  "description": "Minimalistic boilerplate to quick-start Node.js development in TypeScript.",
+  "name": "cigar-scraper",
+  "version": "2.0.0",
+  "description": "Intelligent cigar data extraction using web scraping, AI-powered content processing, and structured data extraction.",
   "type": "module",
   "engines": {
     "node": ">= 20.9 < 21"
@@ -23,8 +23,8 @@
   },
   "scripts": {
     "start": "tsx src/main.ts",
-    "clean": "rimraf coverage build tmp",
-    "prebuild": "npm run lint",
+    "start:dev": "tsx watch src/main.ts",
+    "clean": "rimraf coverage build tmp data",
     "build": "tsc -p tsconfig.json",
     "build:watch": "tsc -w -p tsconfig.json",
     "build:release": "npm run clean && tsc -p tsconfig.release.json",
@@ -33,13 +33,23 @@
     "prettier": "prettier --config .prettierrc --write .",
     "test:watch": "jest --watch"
   },
-  "author": "Jakub Synowiec <jsynowiec@users.noreply.github.com>",
+  "author": "Skok",
   "license": "Apache-2.0",
+  "keywords": [
+    "web-scraping",
+    "ai-extraction",
+    "cigar-data",
+    "puppeteer",
+    "openai",
+    "typescript",
+    "data-extraction"
+  ],
   "dependencies": {
     "axios": "^1.7.7",
     "cheerio": "^1.0.0",
     "dotenv": "^16.4.5",
     "fs": "^0.0.1-security",
+    "js-yaml": "^4.1.0",
     "openai": "^4.58.1",
     "p-retry": "^6.2.0",
     "path": "^0.12.7",
@@ -48,7 +58,8 @@
     "tiktoken": "^1.0.16",
     "tslib": "~2.6",
     "tsx": "^4.19.0",
-    "turndown": "^7.2.0"
+    "turndown": "^7.2.0",
+    "uuid": "^10.0.0"
   },
   "volta": {
     "node": "20.12.2"
